@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+if (! has git); then
+    echo "git: command not found"
+    exit 1
+fi
+
+if (! has php); then
+    echo "php: command not found"
+    exit 1
+fi
+
+exec git "$@"

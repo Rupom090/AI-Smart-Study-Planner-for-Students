@@ -1,23 +1,72 @@
-# AI Smart Study Planner for Students
+<div align="center">
+  <img src="https://placehold.co/1200x360?text=AI+Smart+Study+Planner+Animated+Banner" alt="AI Smart Study Planner" width="100%" />
+</div>
 
-An intelligent study planner that generates personalized schedules based on subjects, exam dates, and available time.
+<div align="center">
+  <strong>AI Smart Study Planner for Students</strong>
+  <br />
+  <em>Personalized schedules, focused progress, smarter study flow.</em>
+</div>
 
-## Features
+<div align="center">
+  <img src="https://img.shields.io/badge/Laravel-11-red" alt="Laravel 11" />
+  <img src="https://img.shields.io/badge/React-TypeScript-61dafb" alt="React + TypeScript" />
+  <img src="https://img.shields.io/badge/Inertia.js-Enabled-9553f0" alt="Inertia.js" />
+  <img src="https://img.shields.io/badge/AI-OpenAI-0b7" alt="OpenAI" />
+  <img src="https://img.shields.io/badge/License-MIT-black" alt="MIT License" />
+</div>
 
-- AI-powered daily study plans with a fallback heuristic when no API key is set
-- Subject and topic management with priorities and exam dates
-- Progress tracking for tasks and study sessions
-- Dashboard analytics and quick insights
-- Smart scheduling that balances urgency and workload
+---
 
-## Technology Stack
+## Table of Contents
 
-- Backend: Laravel 11 (PHP 8.2)
-- Frontend: React + TypeScript + Inertia.js
-- Database: SQLite (development) / MySQL (production)
-- AI: OpenAI
-- Styling: Tailwind CSS
-- Auth: Laravel Breeze
+- [Overview](#overview)
+- [Demo Gallery](#demo-gallery)
+- [Feature Highlights](#feature-highlights)
+- [Quick Start](#quick-start)
+- [API Endpoints](#api-endpoints)
+- [Project Structure](#project-structure)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
+## Overview
+
+AI Smart Study Planner helps students build optimized daily schedules based on exam dates, subject priorities, and available time. It works with or without an OpenAI key, using a fallback algorithm when AI is not configured.
+
+---
+
+## Demo Gallery
+
+Replace the images below with your own animated GIFs or short clips.
+
+<div align="center">
+  <img src="https://placehold.co/1200x675?text=Dashboard+Overview+GIF" alt="Dashboard Overview" width="100%" />
+</div>
+
+<div align="center">
+  <img src="https://placehold.co/1200x675?text=AI+Plan+Generation+GIF" alt="AI Plan Generation" width="100%" />
+</div>
+
+<div align="center">
+  <img src="https://placehold.co/1200x675?text=Task+Progress+Flow+GIF" alt="Task Progress Flow" width="100%" />
+</div>
+
+---
+
+## Feature Highlights
+
+| Area | What it does | Why it matters |
+| --- | --- | --- |
+| AI Planning | Generates daily plans and task sequences | Keeps study time aligned with deadlines |
+| Subject + Topic Tracking | Breaks down subjects into actionable items | Creates manageable goals |
+| Progress Tracking | Marks tasks and logs study sessions | Keeps motivation visible |
+| Analytics | Shows trends, velocity, and completion ratios | Identifies weak spots early |
+| Fallback Planning | Works without OpenAI credentials | No hard dependency on AI |
+
+---
 
 ## Quick Start
 
@@ -63,38 +112,7 @@ An intelligent study planner that generates personalized schedules based on subj
 
 Visit http://localhost:8000
 
-## Configuration
-
-### OpenAI
-
-```env
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o
-```
-
-The app works without an API key using a fallback algorithm, but AI plans are more optimized.
-
-### Database (MySQL example)
-
-```env
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=study_planner
-DB_USERNAME=your_username
-DB_PASSWORD=your_password
-```
-
-## Common Scripts
-
-```powershell
-php artisan serve
-php artisan test
-./vendor/bin/pint
-npm run dev
-npm run build
-npm run lint
-```
+---
 
 ## API Endpoints
 
@@ -132,6 +150,8 @@ npm run lint
 
 - `POST /api/progress-logs`
 
+---
+
 ## Project Structure
 
 ```
@@ -157,11 +177,16 @@ routes/
 └── web.php
 ```
 
-## Troubleshooting
+---
 
-- OpenAI errors: verify `OPENAI_API_KEY` in `.env`.
-- Database errors: confirm connection settings and that migrations have run.
-- Assets not loading: run `npm run build` and clear browser cache.
+## Roadmap
+
+- [ ] Add onboarding walkthrough with guided setup
+- [ ] Add downloadable calendar export (ICS)
+- [ ] Add study streak tracking and reminders
+- [ ] Expand analytics charts with weekly trends
+
+---
 
 ## Contributing
 

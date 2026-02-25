@@ -29,6 +29,7 @@ export default function Welcome({ auth, laravelVersion, phpVersion }: PageProps<
                         <div className="hidden md:flex space-x-8">
                             <a href="#features" className="text-sm font-medium hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Features</a>
                             <Link href="/blog" className="text-sm font-medium hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Blog</Link>
+                            <Link href={route('pricing')} className="text-sm font-medium hover:text-brand-600 dark:hover:text-brand-400 transition-colors">Pricing</Link>
                         </div>
 
                         {/* CTAs */}
@@ -121,12 +122,12 @@ export default function Welcome({ auth, laravelVersion, phpVersion }: PageProps<
                                     {/* Hover Glow Effect inside button */}
                                     <div className="absolute inset-0 bg-gradient-to-r from-brand-500 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                                 </Link>
-                                <a
-                                    href="#demo"
+                                <Link
+                                    href={route('onboarding')}
                                     className="px-8 py-4 rounded-full border-2 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-lg font-bold hover:border-brand-500 dark:hover:border-brand-400 transition-all w-full sm:w-auto hover:bg-slate-50 dark:hover:bg-slate-900 shadow-sm text-center"
                                 >
-                                    View Demo
-                                </a>
+                                    View Onboarding Flow
+                                </Link>
                             </motion.div>
 
                             <motion.p
@@ -285,21 +286,21 @@ export default function Welcome({ auth, laravelVersion, phpVersion }: PageProps<
                                 desc: "Proven strategies backed by science to maximize your retention.",
                                 date: "Oct 12, 2025",
                                 readTime: "5 min read",
-                                image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80"
+                                image: "https://picsum.photos/seed/study1/800/600"
                             },
                             {
                                 title: "The Ultimate Guide to Note Taking",
                                 desc: "Learn the Cornell method and other top note-taking systems.",
                                 date: "Sep 28, 2025",
                                 readTime: "7 min read",
-                                image: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=800&q=80"
+                                image: "https://picsum.photos/seed/study2/800/600"
                             },
                             {
                                 title: "AI in Education: A Student's Guide",
                                 desc: "How to ethically use AI tools to enhance your learning.",
                                 date: "Sep 15, 2025",
                                 readTime: "4 min read",
-                                image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80"
+                                image: "https://picsum.photos/seed/study3/800/600"
                             }
                         ].map((post, idx) => (
                             <motion.div

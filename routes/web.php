@@ -57,7 +57,26 @@ Route::get('/dashboard', function () {
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
+Route::get('/pricing', function () {
+    return Inertia::render('Pricing');
+})->middleware(['auth', 'verified'])->name('pricing');
+
 Route::middleware('auth')->group(function () {
+
+    Route::get('/onboarding', function () {
+        return Inertia::render('WelcomeOnboarding');
+    })->name('onboarding');
+
+    Route::get('/solve', function () {
+        return Inertia::render('Solve');
+    })->name('solve');
+
+    Route::get('/paper-grader', function () {
+        return Inertia::render('PaperGrader');
+    })->name('paper-grader');
+
+    Route::get('/flashcards', [\App\Http\Controllers\FlashcardController::class, 'index'])->name('flashcards');
+
     Route::get('/subjects', function () {
         $subjects = \App\Models\Subject::where('user_id', auth()->id())
             ->with('topics')
@@ -166,6 +185,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/materials/{material}', [StudyMaterialController::class, 'show'])->name('materials.show');
     Route::delete('/materials/{material}', [StudyMaterialController::class, 'destroy'])->name('materials.destroy');
     Route::post('/materials/{material}/chat', [ChatController::class, 'store'])->name('materials.chat');
+    Route::get('/document-chat', [\App\Http\Controllers\DocumentChatController::class, 'index'])->name('document-chat');
+
+    // Global File Manager
+    Route::get('/folders', [\App\Http\Controllers\FolderController::class, 'index'])->name('folders.index');
 
     Route::post('/plans/generate', function (GeneratePlanRequest $request, StudyPlanGenerator $generator) {
         $user = auth()->user();

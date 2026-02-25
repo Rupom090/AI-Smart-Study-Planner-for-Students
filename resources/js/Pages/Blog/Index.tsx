@@ -10,7 +10,7 @@ export default function BlogIndex({ auth }: PageProps) {
             desc: "Proven strategies backed by science to maximize your retention. Learn about active recall, spaced repetition, and the Pomodoro technique.",
             date: "Oct 12, 2025",
             readTime: "5 min read",
-            image: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&w=800&q=80",
+            image: "https://picsum.photos/seed/study1/800/600",
             category: "Study Tips"
         },
         {
@@ -19,7 +19,7 @@ export default function BlogIndex({ auth }: PageProps) {
             desc: "Learn the Cornell method, mapping, and other top note-taking systems to keep your thoughts organized.",
             date: "Sep 28, 2025",
             readTime: "7 min read",
-            image: "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=800&q=80",
+            image: "https://picsum.photos/seed/study2/800/600",
             category: "Productivity"
         },
         {
@@ -28,7 +28,7 @@ export default function BlogIndex({ auth }: PageProps) {
             desc: "How to ethically use AI tools to enhance your learning without compromising academic integrity.",
             date: "Sep 15, 2025",
             readTime: "4 min read",
-            image: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&w=800&q=80",
+            image: "https://picsum.photos/seed/study3/800/600",
             category: "Technology"
         },
         {
@@ -37,7 +37,7 @@ export default function BlogIndex({ auth }: PageProps) {
             desc: "Tips for avoiding burnout and maintaining a healthy work-life balance during the school year.",
             date: "Aug 30, 2025",
             readTime: "6 min read",
-            image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80",
+            image: "https://picsum.photos/seed/study4/800/600",
             category: "Wellness"
         },
         {
@@ -46,7 +46,7 @@ export default function BlogIndex({ auth }: PageProps) {
             desc: "A curated list of the best applications to boost your productivity and grades this year.",
             date: "Aug 15, 2025",
             readTime: "8 min read",
-            image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80",
+            image: "https://picsum.photos/seed/study5/800/600",
             category: "Tools"
         },
         {
@@ -55,7 +55,7 @@ export default function BlogIndex({ auth }: PageProps) {
             desc: "Everything you need to do on the big day to ensure you perform at your absolute best.",
             date: "Jul 20, 2025",
             readTime: "3 min read",
-            image: "https://images.unsplash.com/photo-1456324504439-367cee101252?auto=format&fit=crop&w=800&q=80",
+            image: "https://picsum.photos/seed/study6/800/600",
             category: "Exam Prep"
         }
     ];
@@ -154,7 +154,7 @@ export default function BlogIndex({ auth }: PageProps) {
                         >
                             <div className="relative rounded-3xl overflow-hidden aspect-[21/9] group cursor-pointer">
                                 <img
-                                    src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1600&q=80"
+                                    src="https://picsum.photos/seed/featured/1600/900"
                                     alt="Featured"
                                     className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                                 />

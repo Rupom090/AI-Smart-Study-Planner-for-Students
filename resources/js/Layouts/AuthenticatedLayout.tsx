@@ -1,10 +1,12 @@
 import { useState, PropsWithChildren, ReactNode } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { User } from '@/types';
-import { LayoutDashboard, CheckSquare, FileText, Smartphone, Search, Menu, X, ChevronDown, FolderClosed } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LayoutDashboard, CheckSquare, FileText, Smartphone, Search, Menu, X, ChevronDown, FolderClosed, Layers, MessageSquareText } from 'lucide-react';
 import Dropdown from '@/Components/Dropdown';
 import ThemeToggle from '@/Components/ThemeToggle';
+import { Sparkles } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import GlobalSearch from '@/Components/GlobalSearch';
 
 export default function Authenticated({ user, header, children }: PropsWithChildren<{ user: User, header?: ReactNode }>) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
@@ -37,20 +39,67 @@ export default function Authenticated({ user, header, children }: PropsWithChild
                         Study Sets
                     </Link>
 
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all text-left">
+                    <Link
+                        href={route('solve')}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${route().current('solve')
+                            ? 'bg-brand-500/10 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white hover:scale-[1.02]'
+                            }`}
+                    >
                         <CheckSquare size={20} />
                         Solve
-                    </button>
+                    </Link>
 
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all text-left">
+                    <Link
+                        href={route('paper-grader')}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${route().current('paper-grader')
+                            ? 'bg-brand-500/10 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white hover:scale-[1.02]'
+                            }`}
+                    >
                         <FileText size={20} />
                         Paper Grader
-                    </button>
+                    </Link>
+
+                    <Link
+                        href={route('flashcards')}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${route().current('flashcards')
+                            ? 'bg-brand-500/10 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white hover:scale-[1.02]'
+                            }`}
+                    >
+                        <Layers size={20} />
+                        Flashcards
+                    </Link>
+
+                    <Link
+                        href={route('document-chat')}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all text-left ${route().current('document-chat')
+                            ? 'bg-brand-500/10 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white hover:scale-[1.02]'
+                            }`}
+                    >
+                        <MessageSquareText size={20} />
+                        Doc Chat
+                    </Link>
 
                     <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all text-left">
                         <Smartphone size={20} />
                         App
                     </button>
+
+                    <div className="pt-4 mt-4 border-t border-brand-200/50 dark:border-white/10">
+                        <Link
+                            href={route('pricing')}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${route().current('pricing')
+                                ? 'bg-gradient-to-r from-brand-500 to-purple-500 text-white shadow-md'
+                                : 'text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10'
+                                }`}
+                        >
+                            <Sparkles size={20} className={route().current('pricing') ? '' : 'animate-pulse'} />
+                            Upgrade to Pro
+                        </Link>
+                    </div>
                 </nav>
 
                 {/* User Profile */}
@@ -110,6 +159,56 @@ export default function Authenticated({ user, header, children }: PropsWithChild
                         Study Sets
                     </Link>
                     {/* Repeated items for mobile... */}
+
+                    <Link
+                        href={route('solve')}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${route().current('solve')
+                            ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        onClick={() => setShowingNavigationDropdown(false)}
+                    >
+                        <CheckSquare size={20} />
+                        Solve
+                    </Link>
+
+                    <Link
+                        href={route('paper-grader')}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${route().current('paper-grader')
+                            ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        onClick={() => setShowingNavigationDropdown(false)}
+                    >
+                        <FileText size={20} />
+                        Paper Grader
+                    </Link>
+
+                    <Link
+                        href={route('flashcards')}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${route().current('flashcards')
+                            ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        onClick={() => setShowingNavigationDropdown(false)}
+                    >
+                        <Layers size={20} />
+                        Flashcards
+                    </Link>
+
+                    <div className="pt-2 mt-2 border-t border-slate-200 dark:border-white/5">
+                        <Link
+                            href={route('pricing')}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${route().current('pricing')
+                                ? 'bg-gradient-to-r from-brand-500 to-purple-500 text-white'
+                                : 'text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10'
+                                }`}
+                            onClick={() => setShowingNavigationDropdown(false)}
+                        >
+                            <Sparkles size={20} />
+                            Upgrade to Pro
+                        </Link>
+                    </div>
                 </nav>
                 <div className="absolute bottom-0 w-full p-4 border-t border-slate-200 dark:border-white/5">
                     <div className="flex items-center gap-3 p-2">
@@ -137,21 +236,20 @@ export default function Authenticated({ user, header, children }: PropsWithChild
                     <ThemeToggle />
                 </header>
 
-                {/* Top Bar for Desktop (Search, Helpers) */}
+                {/* Top Bar for Desktop (Helpers & Global Search) */}
                 <header className="hidden lg:flex h-16 items-center justify-end px-8 gap-6 sticky top-0 z-30 bg-transparent">
-                    <div className="relative group">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search materials..."
-                            className="bg-white/50 dark:bg-white/5 border border-brand-200/50 dark:border-white/10 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 w-64 rounded-full py-2 pl-10 pr-4 transition-all duration-300 shadow-sm backdrop-blur-sm"
-                        />
-                    </div>
+                    <GlobalSearch />
                     <ThemeToggle />
-                    <button className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+                    <Link
+                        href={route('folders.index')}
+                        className={`flex items-center gap-2 text-sm font-medium transition-colors outline-none cursor-pointer ${route().current('folders.*')
+                                ? 'text-brand-600 dark:text-brand-400'
+                                : 'text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400'
+                            }`}
+                    >
                         <FolderClosed size={18} />
                         Folders
-                    </button>
+                    </Link>
                 </header>
 
                 {/* Main Slot with Framer Motion Page Transitions */}

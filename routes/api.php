@@ -2,6 +2,10 @@
 
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\ProgressLogController;
+use App\Http\Controllers\SolveController;
+use App\Http\Controllers\PaperGraderController;
+use App\Http\Controllers\FlashcardController;
+use App\Http\Controllers\DocumentChatController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TopicController;
@@ -113,6 +117,13 @@ Route::prefix('v1')->group(function () {
         Route::patch('/tasks/{task}', [TaskController::class, 'updateStatus']);
 
         Route::post('/progress-logs', [ProgressLogController::class, 'store']);
+
+        // AI Integrations
+        Route::post('/solve/text', [SolveController::class, 'analyzeText']);
+        Route::post('/solve/image', [SolveController::class, 'analyzeImage']);
+        Route::post('/paper-grader', [PaperGraderController::class, 'gradePaper']);
+        Route::post('/flashcards/generate', [FlashcardController::class, 'generate']);
+        Route::post('/document-chat', [DocumentChatController::class, 'chat']);
     });
 });
 

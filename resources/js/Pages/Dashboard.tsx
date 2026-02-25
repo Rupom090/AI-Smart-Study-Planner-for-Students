@@ -4,6 +4,9 @@ import { PageProps } from '@/types';
 import { motion } from 'framer-motion';
 import { Upload, Link as LinkIcon, Mic } from 'lucide-react';
 import { showToast } from '@/lib/toast';
+import confetti from 'canvas-confetti';
+import MagneticButton from '@/Components/MagneticButton';
+import TiltCard from '@/Components/TiltCard';
 
 interface Subject {
     id: string;
@@ -15,7 +18,25 @@ export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects:
     // Fallback if subjects is undefined
     const safeSubjects = subjects || [];
 
+    const fireConfetti = () => {
+        const duration = 3 * 1000;
+        const animationEnd = Date.now() + duration;
+        const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+        const interval: any = setInterval(function () {
+            const timeLeft = animationEnd - Date.now();
+
+            if (timeLeft <= 0) {
+                return clearInterval(interval);
+            }
+
+            const particleCount = 50 * (timeLeft / duration);
+            confetti({ ...defaults, particleCount, origin: { x: Math.random(), y: Math.random() - 0.2 } });
+        }, 250);
+    };
+
     const handleAction = (action: string) => {
+        fireConfetti();
         if (action === 'Paste') {
             showToast.success('Paste feature coming soon!');
         } else if (action === 'Record') {
@@ -67,44 +88,50 @@ export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects:
                 >
                     {/* Upload - Links to File Upload Page */}
                     <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                        <Link
-                            href={route('file-upload')}
-                            className="flex flex-col items-start p-8 rounded-2xl glass-panel group transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-brand-500/10 hover:border-brand-500/30"
-                        >
-                            <div className="mb-6 p-4 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-white transition-all duration-300">
-                                <Upload size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">Upload Files</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">PDF, PPT, DOCX, Images & more</p>
-                        </Link>
+                        <MagneticButton className="w-full">
+                            <Link
+                                href={route('file-upload')}
+                                className="flex flex-col items-start p-8 rounded-2xl glass-panel group transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-brand-500/10 hover:border-brand-500/30"
+                            >
+                                <div className="mb-6 p-4 rounded-xl bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 group-hover:scale-110 group-hover:bg-brand-500 group-hover:text-white transition-all duration-300">
+                                    <Upload size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors">Upload Files</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">PDF, PPT, DOCX, Images & more</p>
+                            </Link>
+                        </MagneticButton>
                     </motion.div>
 
                     {/* Paste - Placeholder */}
                     <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                        <button
-                            onClick={() => handleAction('Paste')}
-                            className="flex flex-col items-start p-8 rounded-2xl glass-panel w-full group transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-500/30 text-left"
-                        >
-                            <div className="mb-6 p-4 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
-                                <LinkIcon size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Paste Link</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">YouTube, Website, or raw text</p>
-                        </button>
+                        <MagneticButton className="w-full">
+                            <button
+                                onClick={() => handleAction('Paste')}
+                                className="flex flex-col items-start p-8 rounded-2xl glass-panel w-full group transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-500/30 text-left"
+                            >
+                                <div className="mb-6 p-4 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
+                                    <LinkIcon size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Paste Link</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">YouTube, Website, or raw text</p>
+                            </button>
+                        </MagneticButton>
                     </motion.div>
 
                     {/* Record - Placeholder */}
                     <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                        <button
-                            onClick={() => handleAction('Record')}
-                            className="flex flex-col items-start p-8 rounded-2xl glass-panel w-full group transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-500/30 text-left"
-                        >
-                            <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-                                <Mic size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Record Voice</h3>
-                            <p className="text-sm text-slate-500 dark:text-slate-400">Live lecture transcription</p>
-                        </button>
+                        <MagneticButton className="w-full">
+                            <button
+                                onClick={() => handleAction('Record')}
+                                className="flex flex-col items-start p-8 rounded-2xl glass-panel w-full group transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-500/30 text-left"
+                            >
+                                <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
+                                    <Mic size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Record Voice</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">Live lecture transcription</p>
+                            </button>
+                        </MagneticButton>
                     </motion.div>
                 </motion.div>
 
@@ -140,20 +167,21 @@ export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects:
                     {/* Example Cards */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                         {examples.map((ex, idx) => (
-                            <motion.div
-                                key={idx}
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.4 + (idx * 0.1), duration: 0.5 }}
-                                whileHover={{ scale: 1.03, y: -5 }}
-                                className={`aspect-[16/9] rounded-3xl overflow-hidden relative group cursor-pointer border border-white/20 shadow-lg ${ex.color.split(' ')[0]} dark:${ex.color.split(' ')[1]}`}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
-                                <div className="absolute inset-0 p-8 flex flex-col justify-end transform transition-transform duration-300 group-hover:translate-y-[-5px]">
-                                    <h3 className="text-2xl font-bold text-white mb-2 leading-tight">{ex.title}</h3>
-                                    <p className="text-white/80 font-medium text-sm">{ex.desc}</p>
-                                </div>
-                            </motion.div>
+                            <TiltCard key={idx} className="w-full h-full">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: 0.4 + (idx * 0.1), duration: 0.5 }}
+                                    whileHover={{ scale: 1.03 }}
+                                    className={`w-full aspect-[16/9] rounded-3xl overflow-hidden relative group cursor-pointer border border-white/20 shadow-lg ${ex.color.split(' ')[0]} dark:${ex.color.split(' ')[1]}`}
+                                >
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity"></div>
+                                    <div className="absolute inset-0 p-8 flex flex-col justify-end transform transition-transform duration-300 group-hover:translate-y-[-5px]">
+                                        <h3 className="text-2xl font-bold text-white mb-2 leading-tight">{ex.title}</h3>
+                                        <p className="text-white/80 font-medium text-sm">{ex.desc}</p>
+                                    </div>
+                                </motion.div>
+                            </TiltCard>
                         ))}
                     </div>
                 </div>

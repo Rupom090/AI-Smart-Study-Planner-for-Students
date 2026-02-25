@@ -335,14 +335,13 @@ journey
 ## Milestone Radar
 
 ```mermaid
-radar
+pie
   title Study Readiness Snapshot
-  indicators
-    Consistency: 78
-    Coverage: 64
-    Confidence: 55
-    Urgency: 70
-    Focus: 82
+  "Consistency" : 78
+  "Coverage" : 64
+  "Confidence" : 55
+  "Urgency" : 70
+  "Focus" : 82
 ```
 
 ---

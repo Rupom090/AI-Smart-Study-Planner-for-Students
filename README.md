@@ -1,11 +1,9 @@
 <div align="center">
-  <img src="https://placehold.co/1200x360?text=AI+Smart+Study+Planner+Animated+Banner" alt="AI Smart Study Planner" width="100%" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=220&section=header&text=AI%20Smart%20Study%20Planner&fontSize=40&animation=fadeIn" alt="AI Smart Study Planner" width="100%" />
 </div>
 
 <div align="center">
-  <strong>AI Smart Study Planner for Students</strong>
-  <br />
-  <em>Personalized schedules, focused progress, smarter study flow.</em>
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=22&duration=2500&pause=600&color=2F81F7&center=true&vCenter=true&width=600&lines=AI+powered+study+plans;Smarter+topics+and+task+flow;Visual+progress+that+motivates" alt="Typing intro" />
 </div>
 
 <div align="center">
@@ -14,6 +12,7 @@
   <img src="https://img.shields.io/badge/Inertia.js-Enabled-9553f0" alt="Inertia.js" />
   <img src="https://img.shields.io/badge/AI-OpenAI-0b7" alt="OpenAI" />
   <img src="https://img.shields.io/badge/License-MIT-black" alt="MIT License" />
+  <img src="https://img.shields.io/badge/Status-Active-success" alt="Active status" />
 </div>
 
 ---
@@ -21,7 +20,9 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Quick Peek](#quick-peek)
 - [Demo Gallery](#demo-gallery)
+- [Motion Highlights](#motion-highlights)
 - [Feature Highlights](#feature-highlights)
 - [Quick Start](#quick-start)
 - [API Endpoints](#api-endpoints)
@@ -35,6 +36,16 @@
 ## Overview
 
 AI Smart Study Planner helps students build optimized daily schedules based on exam dates, subject priorities, and available time. It works with or without an OpenAI key, using a fallback algorithm when AI is not configured.
+
+---
+
+## Quick Peek
+
+<div align="center">
+  <img src="https://placehold.co/380x220?text=AI+Plan+Card+GIF" alt="AI Plan Card" width="32%" />
+  <img src="https://placehold.co/380x220?text=Subject+Board+GIF" alt="Subject Board" width="32%" />
+  <img src="https://placehold.co/380x220?text=Progress+Pulse+GIF" alt="Progress Pulse" width="32%" />
+</div>
 
 ---
 
@@ -52,6 +63,22 @@ Replace the images below with your own animated GIFs or short clips.
 
 <div align="center">
   <img src="https://placehold.co/1200x675?text=Task+Progress+Flow+GIF" alt="Task Progress Flow" width="100%" />
+</div>
+
+---
+
+## Motion Highlights
+
+<div align="center">
+  <img src="https://placehold.co/1200x300?text=Study+Plan+Timeline+Animation" alt="Study plan timeline" width="100%" />
+</div>
+
+<div align="center">
+  <img src="https://placehold.co/1200x300?text=Focus+Mode+Animation" alt="Focus mode" width="100%" />
+</div>
+
+<div align="center">
+  <img src="https://placehold.co/1200x300?text=Analytics+Glide+Animation" alt="Analytics glide" width="100%" />
 </div>
 
 ---
@@ -195,3 +222,7 @@ Pull requests are welcome. Please open an issue for major changes.
 ## License
 
 MIT
+
+<div align="center">
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=120&section=footer" alt="Footer" width="100%" />
+</div>

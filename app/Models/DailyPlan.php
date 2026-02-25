@@ -10,6 +10,9 @@ class DailyPlan extends Model
 {
     use HasFactory;
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'user_id',
         'plan_date',
@@ -25,7 +28,7 @@ class DailyPlan extends Model
     protected static function booted(): void
     {
         static::creating(function (DailyPlan $plan) {
-            if (! $plan->getKey()) {
+            if (!$plan->getKey()) {
                 $plan->{$plan->getKeyName()} = (string) Str::uuid();
             }
         });

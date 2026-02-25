@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI Smart Study Planner - Plan Smarter, Study Less</title>
+    <link rel="preconnect" href="https://fonts.bunny.net">
+    <link href="https://fonts.bunny.net/css?family=figtree:400,500,600,700&display=swap" rel="stylesheet" />
+    @vite(['resources/css/app.css'])
+</head>
+
+<body class="antialiased bg-gray-900 text-gray-100 font-sans selection:bg-blue-500 selection:text-white">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-gray-800">
+        <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-2">
+                <span
+                    class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                    AI Smart Study Planner
+                </span>
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#features" class="text-sm font-medium text-gray-300 hover:text-white transition">Features</a>
+                <a href="#how-it-works" class="text-sm font-medium text-gray-300 hover:text-white transition">How it
+                    Works</a>
+                @if (Route::has('login'))
+                    <div class="flex items-center gap-4 ml-4">
+                        @auth
+                            <a href="{{ url('/subjects') }}"
+                                class="text-sm font-medium text-gray-300 hover:text-white transition">Subjects</a>
+                            <a href="{{ url('/plan') }}"
+                                class="text-sm font-medium text-gray-300 hover:text-white transition">Daily Plan</a>
+                            <form method="POST" action="{{ route('logout') }}" class="inline">
+                                @csrf
+                                <button type="submit"
+                                    class="text-sm font-medium text-gray-300 hover:text-red-400 transition ml-2">Log
+                                    Out</button>
+                            </form>
+                        @else
+                            <a href="{{ route('login') }}"
+                                class="text-sm font-medium text-gray-300 hover:text-white transition">Log in</a>
+                            @if (Route::has('register'))
+                                <a href="{{ route('register') }}"
+                                    class="px-5 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-sm font-semibold text-white transition shadow-lg shadow-blue-600/20">Get
+                                    Started</a>
+                            @endif
+                        @endauth
+                    </div>
+                @endif
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
+        <div class="absolute top-0 left-1/2 w-full -translate-x-1/2 h-full z-0 pointer-events-none">
+            <div class="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 rounded-full blur-[100px]"></div>
+            <div class="absolute bottom-20 right-10 w-96 h-96 bg-blue-500/20 rounded-full blur-[100px]"></div>
+        </div>
+
+        <div class="container mx-auto px-6 relative z-10">
+            @auth
+                <!-- Dashboard Content for Logged In Users -->
+                <div class="max-w-6xl mx-auto">
+                    <!-- Welcome -->
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10">
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-2">Hello, {{ Auth::user()->name }}! 👋</h1>
+                            <p class="text-gray-400">Ready to crush your goals today?</p>
+                        </div>
+                        <div class="mt-4 md:mt-0">
+                            <span
+                                class="inline-flex items-center px-4 py-2 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                <span class="w-2 h-2 rounded-full bg-blue-400 mr-2 animate-pulse"></span>
+                                AI Planner Active
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                        <!-- Stat Card 1 -->
+                        <div class="p-6 bg-gray-800 rounded-2xl border border-gray-700 hover:border-gray-600 transition">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-gray-400 font-medium">Daily Progress</h3>
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-green-500/10 flex items-center justify-center text-green-400">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold text-white mb-1">2/5</div>
+                            <p class="text-sm text-green-400">+1 from yesterday</p>
+                        </div>
+
+                        <!-- Stat Card 2 -->
+                        <div class="p-6 bg-gray-800 rounded-2xl border border-gray-700 hover:border-gray-600 transition">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-gray-400 font-medium">Study Streak</h3>
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-400">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z">
+                                        </path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold text-white mb-1">3 Days</div>
+                            <p class="text-sm text-orange-400">Keep it up!</p>
+                        </div>
+
+                        <!-- Stat Card 3 -->
+                        <div class="p-6 bg-gray-800 rounded-2xl border border-gray-700 hover:border-gray-600 transition">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-gray-400 font-medium">Total Hours</h3>
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="text-3xl font-bold text-white mb-1">12.5h</div>
+                            <p class="text-sm text-purple-400">This week</p>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity & Quick Actions -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Quick Actions -->
+                        <div class="bg-gray-800 rounded-2xl border border-gray-700 p-6">
+                            <h2 class="text-lg font-bold text-white mb-6">Quick Actions</h2>
+                            <div class="space-y-4">
+                                <a href="/plan" class="block w-full group">
+                                    <div
+                                        class="flex items-center p-4 rounded-xl bg-gray-700/50 hover:bg-gray-700 border border-gray-600 transition-all group-hover:border-blue-500/50">
+                                        <div
+                                            class="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center text-blue-400 mr-4">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3
+                                                class="font-semibold text-white group-hover:text-blue-400 transition-colors">
+                                                Generate Today's Plan</h3>
+                                            <p class="text-sm text-gray-400">Get an AI-optimized schedule for your exams</p>
+                                        </div>
+                                        <svg class="w-5 h-5 ml-auto text-gray-500 group-hover:text-blue-400 transform group-hover:translate-x-1 transition-all"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </div>
+                                </a>
+
+                                <a href="/subjects" class="block w-full group">
+                                    <div
+                                        class="flex items-center p-4 rounded-xl bg-gray-700/50 hover:bg-gray-700 border border-gray-600 transition-all group-hover:border-purple-500/50">
+                                        <div
+                                            class="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center text-purple-400 mr-4">
+                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 19.477 5.754 20 7.5 20s3.332-.477 4.5-1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 19.477 18.247 20 16.5 20a4.5 4.5 0 00-4.5-1.253">
+                                                </path>
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <h3
+                                                class="font-semibold text-white group-hover:text-purple-400 transition-colors">
+                                                Manage Subjects</h3>
+                                            <p class="text-sm text-gray-400">Add new topics or update progress</p>
+                                        </div>
+                                        <svg class="w-5 h-5 ml-auto text-gray-500 group-hover:text-purple-400 transform group-hover:translate-x-1 transition-all"
+                                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Upcoming Exams -->
+                        <div class="bg-gray-800 rounded-2xl border border-gray-700 p-6">
+                            <h2 class="text-lg font-bold text-white mb-6">Upcoming Exams</h2>
+                            <div class="space-y-4">
+                                @if(\App\Models\Subject::where('user_id', Auth::id())->count() > 0)
+                                    @foreach(\App\Models\Subject::where('user_id', Auth::id())->whereDate('exam_date', '>=', now())->orderBy('exam_date')->take(3)->get() as $subject)
+                                        <div class="flex items-center justify-between p-3 rounded-lg bg-gray-700/30">
+                                            <div class="flex items-center">
+                                                <div class="w-2 h-2 rounded-full bg-red-400 mr-3"></div>
+                                                <div>
+                                                    <p class="font-medium text-white">{{ $subject->name }}</p>
+                                                    <p class="text-xs text-gray-400">
+                                                        {{ \Carbon\Carbon::parse($subject->exam_date)->format('M d, Y') }}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <span
+                                                class="text-xs font-medium text-gray-400">{{ \Carbon\Carbon::parse($subject->exam_date)->diffForHumans() }}</span>
+                                        </div>
+                                    @endforeach
+                                @else
+                                    <div class="text-center py-8 text-gray-500">
+                                        <p>No upcoming exams added yet.</p>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            @else
+                <div class="text-center">
+                    <div
+                        class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-semibold uppercase tracking-wide mb-6">
+                        <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
+                        New Way to Learn
+                    </div>
+                    <h1 class="text-5xl md:text-7xl font-bold mb-6 tracking-tight leading-tight">
+                        Plan Smarter. <br class="hidden md:block" />
+                        <span
+                            class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400">Study
+                            Less. Score More.</span>
+                    </h1>
+                    <p class="text-xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                        AI Smart Study Planner builds realistic daily plans tailored to your exams and free time, so you can
+                        focus on learning, not planning.
+                    </p>
+                    <div class="flex flex-col sm:flex-row justify-center gap-4">
+                        <a href="{{ route('register') }}"
+                            class="px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-lg font-bold text-white transition transform hover:scale-105 shadow-xl shadow-blue-600/20">
+                            Get Started Free
+                        </a>
+                        <a href="#how-it-works"
+                            class="px-8 py-4 rounded-xl bg-gray-800 border border-gray-700 hover:bg-gray-700 text-lg font-bold text-white transition">
+                            See How It Works
+                        </a>
+                    </div>
+                </div>
+            @endauth
+        </div>
+    </header>
+
+    <!-- Problem Statement -->
+    <section class="py-20 bg-gray-800/50">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold mb-4">The Struggle is Real</h2>
+                <p class="text-gray-400">Why most students fail to reach their potential.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8 text-center">
+                <div class="p-8 rounded-2xl bg-gray-800 border border-gray-700">
+                    <div
+                        class="w-14 h-14 mx-auto bg-red-500/10 rounded-full flex items-center justify-center text-red-400 mb-6 text-2xl">
+                        😫</div>
+                    <h3 class="text-xl font-bold mb-3">Stress & Burnout</h3>
+                    <p class="text-gray-400">Random studying generally leads to cramming and overwhelming stress before
+                        exams.</p>
+                </div>
+                <div class="p-8 rounded-2xl bg-gray-800 border border-gray-700">
+                    <div
+                        class="w-14 h-14 mx-auto bg-orange-500/10 rounded-full flex items-center justify-center text-orange-400 mb-6 text-2xl">
+                        ⏳</div>
+                    <h3 class="text-xl font-bold mb-3">Wasted Time</h3>
+                    <p class="text-gray-400">Hours spent deciding "what to study" instead of actually studying.</p>
+                </div>
+                <div class="p-8 rounded-2xl bg-gray-800 border border-gray-700">
+                    <div
+                        class="w-14 h-14 mx-auto bg-yellow-500/10 rounded-full flex items-center justify-center text-yellow-400 mb-6 text-2xl">
+                        📉</div>
+                    <h3 class="text-xl font-bold mb-3">Poor Results</h3>
+                    <p class="text-gray-400">Inefficient revision and lack of structure result in lower grades.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Solution Overview -->
+    <section class="py-20">
+        <div class="container mx-auto px-6">
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <div class="md:w-1/2">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-6">Your Personal AI Tutor & Planner</h2>
+                    <ul class="space-y-6">
+                        <li class="flex items-start">
+                            <div
+                                class="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mt-1 mr-4">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg mb-1">Instant Daily Plans</h3>
+                                <p class="text-gray-400">AI generates a balanced schedule for you every morning based on
+                                    your free time.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <div
+                                class="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mt-1 mr-4">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg mb-1">Adaptive Scheduling</h3>
+                                <p class="text-gray-400">Miss a day? No problem. The plan automatically adjusts to keep
+                                    you on track.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start">
+                            <div
+                                class="flex-shrink-0 w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 mt-1 mr-4">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-lg mb-1">Exam Focused</h3>
+                                <p class="text-gray-400">Prioritizes topics based on exam dates and your weak areas.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="md:w-1/2">
+                    <div class="relative rounded-2xl bg-gray-800 border border-gray-700 p-6 shadow-2xl">
+                        <!-- Mockup of a plan -->
+                        <div class="flex items-center justify-between mb-6 border-b border-gray-700 pb-4">
+                            <div>
+                                <div class="text-xs text-blue-400 font-semibold uppercase">Today's Focus</div>
+                                <div class="text-xl font-bold">Physics & Calculus</div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold">3h 30m</div>
+                                <div class="text-xs text-gray-500">Total Time</div>
+                            </div>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-gray-700/50 rounded-lg flex items-center gap-3">
+                                <div class="w-2 h-2 rounded-full bg-purple-400"></div>
+                                <span class="text-gray-200">Thermodynamics Revision</span>
+                                <span class="ml-auto text-sm text-gray-500">45m</span>
+                            </div>
+                            <div class="p-3 bg-gray-700/50 rounded-lg flex items-center gap-3">
+                                <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+                                <span class="text-gray-200">Integration Practice Problems</span>
+                                <span class="ml-auto text-sm text-gray-500">60m</span>
+                            </div>
+                            <div class="p-3 bg-gray-700/50 rounded-lg flex items-center gap-3">
+                                <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                                <span class="text-gray-200">Chemistry: Organic Compounds</span>
+                                <span class="ml-auto text-sm text-gray-500">45m</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-20 bg-gray-800/30">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold mb-4">Everything You Need to Succeed</h2>
+            </div>
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="p-6 bg-gray-800 border border-gray-700 rounded-xl hover:border-blue-500/50 transition">
+                    <div
+                        class="w-10 h-10 bg-blue-500/20 rounded-lg flex items-center justify-center text-blue-400 mb-4">
+                        📅</div>
+                    <h3 class="text-lg font-bold mb-2">Daily AI Plans</h3>
+                    <p class="text-sm text-gray-400">Get a fresh schedule every morning customized to your life.</p>
+                </div>
+                <div class="p-6 bg-gray-800 border border-gray-700 rounded-xl hover:border-purple-500/50 transition">
+                    <div
+                        class="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center text-purple-400 mb-4">
+                        🚀</div>
+                    <h3 class="text-lg font-bold mb-2">Smart Prioritization</h3>
+                    <p class="text-sm text-gray-400">Algorithm prioritizes urgent exams and difficult subjects.</p>
+                </div>
+                <div class="p-6 bg-gray-800 border border-gray-700 rounded-xl hover:border-pink-500/50 transition">
+                    <div
+                        class="w-10 h-10 bg-pink-500/20 rounded-lg flex items-center justify-center text-pink-400 mb-4">
+                        🔄</div>
+                    <h3 class="text-lg font-bold mb-2">Auto-Rescheduling</h3>
+                    <p class="text-sm text-gray-400">Life happens. We adjust your timeline instantly if you fall behind.
+                    </p>
+                </div>
+                <div class="p-6 bg-gray-800 border border-gray-700 rounded-xl hover:border-green-500/50 transition">
+                    <div
+                        class="w-10 h-10 bg-green-500/20 rounded-lg flex items-center justify-center text-green-400 mb-4">
+                        📊</div>
+                    <h3 class="text-lg font-bold mb-2">Progress Tracking</h3>
+                    <p class="text-sm text-gray-400">Visualize your learning journey and see how far you've come.</p>
+                </div>
+                <div class="p-6 bg-gray-800 border border-gray-700 rounded-xl hover:border-yellow-500/50 transition">
+                    <div
+                        class="w-10 h-10 bg-yellow-500/20 rounded-lg flex items-center justify-center text-yellow-400 mb-4">
+                        🧠</div>
+                    <h3 class="text-lg font-bold mb-2">Spaced Revision</h3>
+                    <p class="text-sm text-gray-400">Built-in revision slots ensure you retain what you learn.</p>
+                </div>
+                <div class="p-6 bg-gray-800 border border-gray-700 rounded-xl hover:border-cyan-500/50 transition">
+                    <div
+                        class="w-10 h-10 bg-cyan-500/20 rounded-lg flex items-center justify-center text-cyan-400 mb-4">
+                        🔒</div>
+                    <h3 class="text-lg font-bold mb-2">Private & Secure</h3>
+                    <p class="text-sm text-gray-400">Your study data is yours alone. No data selling.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="py-20">
+        <div class="container mx-auto px-6">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold mb-4">How It Works</h2>
+                <p class="text-gray-400">Simple steps to academic mastery.</p>
+            </div>
+            <div class="grid md:grid-cols-4 gap-6 text-center">
+                <div class="relative">
+                    <div
+                        class="w-16 h-16 mx-auto bg-gray-800 border border-blue-500 rounded-full flex items-center justify-center text-2xl font-bold mb-4">
+                        1</div>
+                    <h3 class="font-bold mb-2">Add Subjects</h3>
+                    <p class="text-sm text-gray-400">Input your subjects, topics, and exam dates.</p>
+                </div>
+                <div class="relative">
+                    <div
+                        class="w-16 h-16 mx-auto bg-gray-800 border border-gray-600 rounded-full flex items-center justify-center text-2xl font-bold mb-4">
+                        2</div>
+                    <h3 class="font-bold mb-2">Set Time</h3>
+                    <p class="text-sm text-gray-400">Tell AI how many hours you have available today.</p>
+                </div>
+                <div class="relative">
+                    <div
+                        class="w-16 h-16 mx-auto bg-gray-800 border border-gray-600 rounded-full flex items-center justify-center text-2xl font-bold mb-4">
+                        3</div>
+                    <h3 class="font-bold mb-2">Get Plan</h3>
+                    <p class="text-sm text-gray-400">Receive your optimized study task list instantly.</p>
+                </div>
+                <div class="relative">
+                    <div
+                        class="w-16 h-16 mx-auto bg-gray-800 border border-gray-600 rounded-full flex items-center justify-center text-2xl font-bold mb-4">
+                        4</div>
+                    <h3 class="font-bold mb-2">Execute</h3>
+                    <p class="text-sm text-gray-400">Follow the plan. We handle the rescheduling.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Who It Is For -->
+    <section class="py-20 bg-gray-800/30">
+        <div class="container mx-auto px-6 text-center">
+            <h2 class="text-3xl font-bold mb-10">Perfect For</h2>
+            <div class="flex flex-wrap justify-center gap-4">
+                <span class="px-6 py-3 rounded-full bg-gray-800 border border-gray-700 text-lg">🎓 School
+                    Students</span>
+                <span class="px-6 py-3 rounded-full bg-gray-800 border border-gray-700 text-lg">🏫 College
+                    Students</span>
+                <span class="px-6 py-3 rounded-full bg-gray-800 border border-gray-700 text-lg">📚 Self Learners</span>
+                <span class="px-6 py-3 rounded-full bg-gray-800 border border-gray-700 text-lg">📝 Competitive Exam
+                    Aspirants</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Trust & CTA -->
+    <section class="py-24 relative overflow-hidden">
+        <!-- Background Glow -->
+        <div
+            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[100px] pointer-events-none">
+        </div>
+
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Upgrade Your Grades?</h2>
+            <p class="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
+                Join students who are studying smarter, not harder. Secure, private, and powered by advanced AI.
+            </p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <a href="{{ route('register') }}"
+                    class="px-10 py-5 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-xl font-bold text-white transition transform hover:scale-105 shadow-2xl">
+                    Start Planning Free
+                </a>
+            </div>
+            <p class="mt-6 text-sm text-gray-500">No credit card required. Free for students.</p>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-10 border-t border-gray-800 bg-gray-900">
+        <div class="container mx-auto px-6 text-center text-gray-500">
+            <p>&copy; {{ date('Y') }} AI Smart Study Planner. Built with <span class="text-red-500">♥</span> using
+                Laravel & AI.</p>
+        </div>
+    </footer>
+</body>
+
+</html>

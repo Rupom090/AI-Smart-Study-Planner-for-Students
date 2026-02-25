@@ -10,6 +10,9 @@ class Topic extends Model
 {
     use HasFactory;
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'subject_id',
         'title',
@@ -17,6 +20,10 @@ class Topic extends Model
         'estimated_hours',
         'is_completed',
     ];
+
+    public $searchable = ['title'];
+    public $filterable = ['difficulty', 'is_completed'];
+    public $sortable = ['title', 'difficulty', 'estimated_hours', 'created_at'];
 
     protected $casts = [
         'is_completed' => 'boolean',
@@ -26,7 +33,7 @@ class Topic extends Model
     protected static function booted(): void
     {
         static::creating(function (Topic $topic) {
-            if (! $topic->getKey()) {
+            if (!$topic->getKey()) {
                 $topic->{$topic->getKeyName()} = (string) Str::uuid();
             }
         });

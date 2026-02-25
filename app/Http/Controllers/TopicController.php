@@ -9,9 +9,14 @@ use App\Models\Topic;
 
 class TopicController extends Controller
 {
-    public function index(Subject $subject)
+    public function index(\Illuminate\Http\Request $request, Subject $subject)
     {
-        return response()->json($subject->topics()->orderBy('created_at')->get());
+        $query = $subject->topics();
+
+        $builder = new \App\Services\ApiQueryBuilder($query, $request);
+        $topics = $builder->apply()->paginate(20);
+
+        return response()->json($topics);
     }
 
     public function store(StoreTopicRequest $request, Subject $subject)

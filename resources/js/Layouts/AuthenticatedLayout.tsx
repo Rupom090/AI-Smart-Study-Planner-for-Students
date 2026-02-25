@@ -1,179 +1,173 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import Dropdown from '@/Components/Dropdown';
-import NavLink from '@/Components/NavLink';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import { useState, PropsWithChildren, ReactNode } from 'react';
 import { Link, usePage } from '@inertiajs/react';
-import { PropsWithChildren, ReactNode, useState } from 'react';
+import { User } from '@/types';
+import { LayoutDashboard, CheckSquare, FileText, Smartphone, Search, Menu, X, ChevronDown, FolderClosed } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import Dropdown from '@/Components/Dropdown';
+import ThemeToggle from '@/Components/ThemeToggle';
 
-export default function Authenticated({
-    header,
-    children,
-}: PropsWithChildren<{ header?: ReactNode }>) {
-    const user = usePage().props.auth.user;
-
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+export default function Authenticated({ user, header, children }: PropsWithChildren<{ user: User, header?: ReactNode }>) {
+    const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
     return (
-        <div className="min-h-screen bg-gray-100">
-            <nav className="border-b border-gray-100 bg-white">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
-                        <div className="flex">
-                            <div className="flex shrink-0 items-center">
-                                <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-gray-800" />
-                                </Link>
-                            </div>
+        <div className="min-h-screen bg-white dark:bg-studley-dark text-slate-900 dark:text-studley-gray font-sans selection:bg-brand-500/30 flex">
 
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
-                            </div>
+            {/* Sidebar (Desktop) */}
+            <aside className="hidden lg:flex flex-col w-64 fixed inset-y-0 z-50 bg-white/60 dark:bg-studley-dark/60 backdrop-blur-xl border-r border-brand-200/50 dark:border-white/10 transition-colors duration-300">
+                {/* Logo */}
+                <div className="h-16 flex items-center px-6">
+                    <Link href="/" className="flex items-center gap-2 text-brand-600 font-bold text-xl tracking-tight">
+                        <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white">
+                            S
                         </div>
+                        Studley
+                    </Link>
+                </div>
 
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center">
-                            <div className="relative ms-3">
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
-                                            >
-                                                {user.name}
+                {/* Nav Links */}
+                <nav className="flex-1 px-3 py-6 space-y-1">
+                    <Link
+                        href={route('dashboard')}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 ${route().current('dashboard')
+                            ? 'bg-brand-500/10 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 shadow-sm'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white hover:scale-[1.02]'
+                            }`}
+                    >
+                        <LayoutDashboard size={20} />
+                        Study Sets
+                    </Link>
 
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </Dropdown.Trigger>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all text-left">
+                        <CheckSquare size={20} />
+                        Solve
+                    </button>
 
-                                    <Dropdown.Content>
-                                        <Dropdown.Link
-                                            href={route('profile.edit')}
-                                        >
-                                            Profile
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route('logout')}
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </Dropdown.Link>
-                                    </Dropdown.Content>
-                                </Dropdown>
-                            </div>
-                        </div>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all text-left">
+                        <FileText size={20} />
+                        Paper Grader
+                    </button>
 
-                        <div className="-me-2 flex items-center sm:hidden">
-                            <button
-                                onClick={() =>
-                                    setShowingNavigationDropdown(
-                                        (previousState) => !previousState,
-                                    )
-                                }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-gray-400 transition duration-150 ease-in-out hover:bg-gray-100 hover:text-gray-500 focus:bg-gray-100 focus:text-gray-500 focus:outline-none"
-                            >
-                                <svg
-                                    className="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        className={
-                                            !showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        className={
-                                            showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
+                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all text-left">
+                        <Smartphone size={20} />
+                        App
+                    </button>
+                </nav>
+
+                {/* User Profile */}
+                <div className="p-4 border-t border-brand-200/50 dark:border-white/10">
+                    <Dropdown>
+                        <Dropdown.Trigger>
+                            <button className="flex items-center w-full gap-3 p-2 rounded-lg hover:bg-slate-100/50 dark:hover:bg-white/5 transition-all outline-none">
+                                <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
+                                    {user.name.charAt(0)}
+                                </div>
+                                <div className="flex-1 text-left overflow-hidden">
+                                    <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{user.name}</p>
+                                </div>
+                                <ChevronDown size={16} className="text-slate-400" />
                             </button>
-                        </div>
-                    </div>
-                </div>
+                        </Dropdown.Trigger>
 
-                <div
-                    className={
-                        (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
-                    }
-                >
-                    <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <div className="border-t border-gray-200 pb-1 pt-4">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-gray-800">
-                                {user.name}
-                            </div>
-                            <div className="text-sm font-medium text-gray-500">
-                                {user.email}
-                            </div>
-                        </div>
-
-                        <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                method="post"
-                                href={route('logout')}
-                                as="button"
-                            >
+                        <Dropdown.Content contentClasses="py-1 bg-white dark:bg-studley-dark border border-slate-200 dark:border-white/10 shadow-xl">
+                            <Dropdown.Link href={route('profile.edit')}>Profile</Dropdown.Link>
+                            <Dropdown.Link href={route('logout')} method="post" as="button">
                                 Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
+                            </Dropdown.Link>
+                        </Dropdown.Content>
+                    </Dropdown>
                 </div>
-            </nav>
+            </aside>
 
-            {header && (
-                <header className="bg-white shadow">
-                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                        {header}
-                    </div>
-                </header>
+            {/* Mobile Sidebar Overlay */}
+            {showingNavigationDropdown && (
+                <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={() => setShowingNavigationDropdown(false)}></div>
             )}
 
-            <main>{children}</main>
+            {/* Mobile Sidebar */}
+            <div className={`fixed inset-y-0 left-0 z-50 w-64 bg-slate-50 dark:bg-studley-dark shadow-xl transform transition-transform duration-300 lg:hidden ${showingNavigationDropdown ? 'translate-x-0' : '-translate-x-full'
+                }`}>
+                <div className="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-white/5">
+                    <Link href="/" className="flex items-center gap-2 text-brand-600 font-bold text-xl tracking-tight">
+                        <div className="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white">
+                            S
+                        </div>
+                        Studley
+                    </Link>
+                    <button onClick={() => setShowingNavigationDropdown(false)} className="text-slate-500 dark:text-slate-400">
+                        <X size={24} />
+                    </button>
+                </div>
+                <nav className="p-4 space-y-1">
+                    <Link
+                        href={route('dashboard')}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${route().current('dashboard')
+                            ? 'bg-slate-200 dark:bg-white/10 text-slate-900 dark:text-white'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                            }`}
+                        onClick={() => setShowingNavigationDropdown(false)}
+                    >
+                        <LayoutDashboard size={20} />
+                        Study Sets
+                    </Link>
+                    {/* Repeated items for mobile... */}
+                </nav>
+                <div className="absolute bottom-0 w-full p-4 border-t border-slate-200 dark:border-white/5">
+                    <div className="flex items-center gap-3 p-2">
+                        <div className="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-white font-bold text-sm">
+                            {user.name.charAt(0)}
+                        </div>
+                        <div className="flex-1 text-left overflow-hidden">
+                            <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{user.name}</p>
+                            <Link href={route('logout')} method="post" as="button" className="text-xs text-brand-500 hover:text-brand-400">
+                                Log Out
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content */}
+            <div className="flex-1 lg:ml-64 flex flex-col min-h-screen bg-slate-50/50 dark:bg-studley-dark/95 transition-colors duration-300">
+                {/* Mobile Header */}
+                <header className="lg:hidden h-16 bg-white/80 dark:bg-studley-dark/80 backdrop-blur-xl border-b border-brand-200/50 dark:border-white/10 px-4 flex items-center justify-between sticky top-0 z-30">
+                    <button onClick={() => setShowingNavigationDropdown(true)} className="text-slate-500 dark:text-slate-400 hover:text-brand-500 transition-colors">
+                        <Menu size={24} />
+                    </button>
+                    <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">Studley</span>
+                    <ThemeToggle />
+                </header>
+
+                {/* Top Bar for Desktop (Search, Helpers) */}
+                <header className="hidden lg:flex h-16 items-center justify-end px-8 gap-6 sticky top-0 z-30 bg-transparent">
+                    <div className="relative group">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-500 transition-colors" size={18} />
+                        <input
+                            type="text"
+                            placeholder="Search materials..."
+                            className="bg-white/50 dark:bg-white/5 border border-brand-200/50 dark:border-white/10 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:ring-1 focus:ring-brand-500 focus:border-brand-500 w-64 rounded-full py-2 pl-10 pr-4 transition-all duration-300 shadow-sm backdrop-blur-sm"
+                        />
+                    </div>
+                    <ThemeToggle />
+                    <button className="flex items-center gap-2 text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+                        <FolderClosed size={18} />
+                        Folders
+                    </button>
+                </header>
+
+                {/* Main Slot with Framer Motion Page Transitions */}
+                <AnimatePresence mode="wait">
+                    <motion.main
+                        key={usePage().url}
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -15 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="flex-1 w-full"
+                    >
+                        {children}
+                    </motion.main>
+                </AnimatePresence>
+            </div>
         </div>
     );
 }

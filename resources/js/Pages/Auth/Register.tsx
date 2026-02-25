@@ -6,6 +6,8 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
+import signUpAnimation from '../../assets/SignUpAnimation.json';
+
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -23,7 +25,7 @@ export default function Register() {
     };
 
     return (
-        <GuestLayout>
+        <GuestLayout illustration={signUpAnimation}>
             <Head title="Register" />
 
             <form onSubmit={submit}>

@@ -8,7 +8,10 @@ use Illuminate\Support\Str;
 
 class Subject extends Model
 {
-    use HasFactory;
+    use HasFactory, \Illuminate\Database\Eloquent\Concerns\HasUuids;
+
+    protected $keyType = 'string';
+    public $incrementing = false;
 
     protected $fillable = [
         'user_id',
@@ -17,18 +20,15 @@ class Subject extends Model
         'priority_level',
     ];
 
+    public $searchable = ['name'];
+    public $filterable = ['priority_level'];
+    public $sortable = ['name', 'exam_date', 'priority_level', 'created_at'];
+
     protected $casts = [
         'exam_date' => 'date',
     ];
 
-    protected static function booted(): void
-    {
-        static::creating(function (Subject $subject) {
-            if (! $subject->getKey()) {
-                $subject->{$subject->getKeyName()} = (string) Str::uuid();
-            }
-        });
-    }
+
 
     public function user()
     {
@@ -38,5 +38,10 @@ class Subject extends Model
     public function topics()
     {
         return $this->hasMany(Topic::class);
+    }
+
+    public function studyMaterials()
+    {
+        return $this->hasMany(StudyMaterial::class);
     }
 }

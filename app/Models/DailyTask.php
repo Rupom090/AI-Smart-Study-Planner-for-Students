@@ -10,6 +10,9 @@ class DailyTask extends Model
 {
     use HasFactory;
 
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'daily_plan_id',
         'topic_id',
@@ -27,7 +30,7 @@ class DailyTask extends Model
     protected static function booted(): void
     {
         static::creating(function (DailyTask $task) {
-            if (! $task->getKey()) {
+            if (!$task->getKey()) {
                 $task->{$task->getKeyName()} = (string) Str::uuid();
             }
         });

@@ -11,3 +11,4 @@ if (! has php); then
 fi
 
 exec git "$@"
+node_modules

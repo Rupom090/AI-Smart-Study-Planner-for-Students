@@ -13,7 +13,11 @@ class SubjectController extends Controller
     public function index(Request $request)
     {
         $user = $request->user() ?? Auth::user();
-        $subjects = Subject::where('user_id', $user->id)->with('topics')->orderBy('exam_date')->get();
+        $query = Subject::where('user_id', $user->id)->with('topics');
+
+        $builder = new \App\Services\ApiQueryBuilder($query, $request);
+        $subjects = $builder->apply()->paginate(20); // Default pagination
+
         return response()->json($subjects);
     }
 

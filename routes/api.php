@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\V1\HealthController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\FileUploadController;
+use App\Http\Controllers\Api\V1\PasteController;
 use App\Http\Controllers\Api\V1\NotificationController;
 use App\Http\Controllers\Api\V1\AnalyticsController;
 use App\Http\Controllers\Api\V1\ExportController;
@@ -71,6 +72,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('files')->group(function () {
             Route::post('/upload', [FileUploadController::class, 'upload']);
             Route::post('/upload-multiple', [FileUploadController::class, 'uploadMultiple']);
+            Route::post('/paste', [PasteController::class, 'store']);
             Route::get('/', [FileUploadController::class, 'index']);
             Route::get('/{id}', [FileUploadController::class, 'show']);
             Route::delete('/{id}', [FileUploadController::class, 'destroy']);

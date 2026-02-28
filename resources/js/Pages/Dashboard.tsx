@@ -1,8 +1,10 @@
+import { useState } from 'react';
+import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { motion } from 'framer-motion';
-import { Upload, Link as LinkIcon, Mic } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Upload, Link as LinkIcon, Mic, X, Loader2 } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 import confetti from 'canvas-confetti';
 import MagneticButton from '@/Components/MagneticButton';
@@ -17,6 +19,35 @@ interface Subject {
 export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects: Subject[] }>) {
     // Fallback if subjects is undefined
     const safeSubjects = subjects || [];
+
+    // Paste Modal State
+    const [isPasteModalOpen, setIsPasteModalOpen] = useState(false);
+    const [pasteTitle, setPasteTitle] = useState('');
+    const [pasteContent, setPasteContent] = useState('');
+    const [isPasting, setIsPasting] = useState(false);
+
+    const handlePasteSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!pasteTitle || !pasteContent) return;
+
+        setIsPasting(true);
+        try {
+            await axios.post('/api/v1/files/paste', {
+                title: pasteTitle,
+                content: pasteContent
+            });
+            showToast.success('Content saved successfully to your Folders!');
+            setIsPasteModalOpen(false);
+            setPasteTitle('');
+            setPasteContent('');
+            fireConfetti();
+        } catch (error) {
+            console.error(error);
+            showToast.error('Failed to save content.');
+        } finally {
+            setIsPasting(false);
+        }
+    };
 
     const fireConfetti = () => {
         const duration = 3 * 1000;
@@ -36,10 +67,7 @@ export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects:
     };
 
     const handleAction = (action: string) => {
-        fireConfetti();
-        if (action === 'Paste') {
-            showToast.success('Paste feature coming soon!');
-        } else if (action === 'Record') {
+        if (action === 'Record') {
             showToast.success('Voice recording coming soon!');
         }
     };
@@ -102,18 +130,20 @@ export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects:
                         </MagneticButton>
                     </motion.div>
 
-                    {/* Paste - Upcoming */}
+                    {/* Paste - Interactive */}
                     <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                        <div className="relative flex flex-col items-start p-8 rounded-2xl glass-panel w-full cursor-not-allowed opacity-80 border-dashed border-2 text-left h-full">
-                            <div className="absolute top-4 right-4 bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-                                Coming Soon
-                            </div>
-                            <div className="mb-6 p-4 rounded-xl bg-slate-100 dark:bg-surface-800 text-slate-400 dark:text-slate-500">
-                                <LinkIcon size={32} />
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-400 dark:text-slate-500 mb-2">Paste Link</h3>
-                            <p className="text-sm text-slate-400 dark:text-slate-500">YouTube, Website, or raw text</p>
-                        </div>
+                        <MagneticButton className="w-full">
+                            <button
+                                onClick={() => setIsPasteModalOpen(true)}
+                                className="flex flex-col items-start p-8 rounded-2xl glass-panel w-full group transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-500/30 text-left h-full"
+                            >
+                                <div className="mb-6 p-4 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
+                                    <LinkIcon size={32} />
+                                </div>
+                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Paste Link</h3>
+                                <p className="text-sm text-slate-500 dark:text-slate-400">YouTube, Website, or raw text</p>
+                            </button>
+                        </MagneticButton>
                     </motion.div>
 
                     {/* Record - Upcoming */}
@@ -183,6 +213,100 @@ export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects:
                 </div>
 
             </div>
+
+            {/* Paste Link Modal */}
+            <AnimatePresence>
+                {isPasteModalOpen && (
+                    <>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            onClick={() => setIsPasteModalOpen(false)}
+                            className="fixed inset-0 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm z-50 transition-opacity"
+                        />
+                        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 py-12 px-6 pointer-events-none">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                                className="w-full max-w-lg glass-panel bg-white/90 dark:bg-surface-800/90 rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden pointer-events-auto flex flex-col max-h-full"
+                            >
+                                <div className="p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-slate-50/50 dark:bg-surface-900/50 flex-shrink-0">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-purple-100 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-lg">
+                                            <LinkIcon size={20} />
+                                        </div>
+                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Paste Content</h3>
+                                    </div>
+                                    <button
+                                        onClick={() => setIsPasteModalOpen(false)}
+                                        className="p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors rounded-full hover:bg-slate-100 dark:hover:bg-white/5"
+                                    >
+                                        <X size={20} />
+                                    </button>
+                                </div>
+
+                                <div className="p-6 overflow-y-auto">
+                                    <form id="paste-form" onSubmit={handlePasteSubmit} className="space-y-5">
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                                Title
+                                            </label>
+                                            <input
+                                                type="text"
+                                                value={pasteTitle}
+                                                onChange={(e) => setPasteTitle(e.target.value)}
+                                                placeholder="e.g. History Lecture Notes"
+                                                className="w-full rounded-xl border-slate-200 dark:border-white/10 bg-white/50 dark:bg-surface-900/50 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all dark:text-white"
+                                                required
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
+                                                Content
+                                            </label>
+                                            <textarea
+                                                value={pasteContent}
+                                                onChange={(e) => setPasteContent(e.target.value)}
+                                                placeholder="Paste a URL or raw text here..."
+                                                rows={5}
+                                                className="w-full rounded-xl border-slate-200 dark:border-white/10 bg-white/50 dark:bg-surface-900/50 focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all dark:text-white resize-y"
+                                                required
+                                            />
+                                            <p className="text-xs text-slate-500 mt-2">
+                                                Text will be saved as a document in your Folders.
+                                            </p>
+                                        </div>
+                                    </form>
+                                </div>
+
+                                <div className="p-6 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-surface-900/50 flex justify-end gap-3 flex-shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsPasteModalOpen(false)}
+                                        className="px-5 py-2.5 rounded-xl font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        form="paste-form"
+                                        disabled={isPasting || !pasteTitle || !pasteContent}
+                                        className="px-6 py-2.5 rounded-xl font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center min-w-[120px]"
+                                    >
+                                        {isPasting ? (
+                                            <Loader2 size={20} className="animate-spin" />
+                                        ) : (
+                                            'Save Content'
+                                        )}
+                                    </button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    </>
+                )}
+            </AnimatePresence>
         </AuthenticatedLayout>
     );
 }

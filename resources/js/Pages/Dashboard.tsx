@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link } from '@inertiajs/react';
@@ -25,6 +25,35 @@ export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects:
     const [pasteTitle, setPasteTitle] = useState('');
     const [pasteContent, setPasteContent] = useState('');
     const [isPasting, setIsPasting] = useState(false);
+    const [isFetchingTitle, setIsFetchingTitle] = useState(false);
+
+    // Auto-detect URL and fetch title
+    useEffect(() => {
+        const urlMatch = pasteContent.trim().match(/^https?:\/\/[^\s]+$/);
+        if (!urlMatch) return;
+
+        const timeoutId = setTimeout(async () => {
+            setIsFetchingTitle(true);
+            try {
+                const response = await axios.post('/api/v1/files/paste/fetch-title', {
+                    url: pasteContent.trim()
+                });
+
+                if (response.data?.data?.title && response.data.data.title !== 'Document') {
+                    // Overwrite title if it's currently empty
+                    if (!pasteTitle.trim()) {
+                        setPasteTitle(response.data.data.title);
+                    }
+                }
+            } catch (error) {
+                console.error("Failed to fetch URL title", error);
+            } finally {
+                setIsFetchingTitle(false);
+            }
+        }, 800);
+
+        return () => clearTimeout(timeoutId);
+    }, [pasteContent]);
 
     const handlePasteSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -250,9 +279,17 @@ export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects:
                                 <div className="p-6 overflow-y-auto">
                                     <form id="paste-form" onSubmit={handlePasteSubmit} className="space-y-5">
                                         <div>
-                                            <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
-                                                Title
-                                            </label>
+                                            <div className="flex items-center justify-between mb-2">
+                                                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300">
+                                                    Title
+                                                </label>
+                                                {isFetchingTitle && (
+                                                    <span className="flex items-center gap-1.5 text-xs text-purple-600 dark:text-purple-400 font-medium">
+                                                        <Loader2 size={12} className="animate-spin" />
+                                                        Detecting title...
+                                                    </span>
+                                                )}
+                                            </div>
                                             <input
                                                 type="text"
                                                 value={pasteTitle}

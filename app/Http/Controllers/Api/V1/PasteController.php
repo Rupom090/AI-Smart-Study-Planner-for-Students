@@ -85,4 +85,52 @@ class PasteController extends BaseApiController
             );
         }
     }
+
+    /**
+     * Fetch the title from a given URL
+     */
+    public function fetchTitle(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'url' => 'required|url|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse('Invalid URL', 422);
+        }
+
+        try {
+            $url = $request->input('url');
+
+            // Set a user agent to avoid basic blocks
+            $opts = [
+                "http" => [
+                    "method" => "GET",
+                    "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\n"
+                ]
+            ];
+            $context = stream_context_create($opts);
+
+            // Fetch only the first 8192 bytes to save time, usually enough for the <title>
+            $html = @file_get_contents($url, false, $context, 0, 8192);
+
+            $title = 'Document';
+
+            if ($html !== false) {
+                // Try to extract the title tag
+                if (preg_match('/<title[^>]*>(.*?)<\/title>/ims', $html, $matches)) {
+                    // Decode HTML entities
+                    $title = html_entity_decode(trim($matches[1]), ENT_QUOTES | ENT_XML1, 'UTF-8');
+                    // Remove any newlines or extra spaces
+                    $title = preg_replace('/\s+/', ' ', $title);
+                }
+            }
+
+            return $this->successResponse(['title' => $title], 'Title fetched');
+
+        } catch (\Exception $e) {
+            // Silently fail and return a fallback rather than throwing a hard error to the user
+            return $this->successResponse(['title' => 'Document'], 'Title fetch failed');
+        }
+    }
 }

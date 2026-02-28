@@ -73,6 +73,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/upload', [FileUploadController::class, 'upload']);
             Route::post('/upload-multiple', [FileUploadController::class, 'uploadMultiple']);
             Route::post('/paste', [PasteController::class, 'store']);
+            Route::post('/paste/fetch-title', [PasteController::class, 'fetchTitle']);
             Route::get('/', [FileUploadController::class, 'index']);
             Route::get('/{id}', [FileUploadController::class, 'show']);
             Route::delete('/{id}', [FileUploadController::class, 'destroy']);

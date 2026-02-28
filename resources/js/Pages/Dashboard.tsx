@@ -102,36 +102,32 @@ export default function Dashboard({ auth, subjects = [] }: PageProps<{ subjects:
                         </MagneticButton>
                     </motion.div>
 
-                    {/* Paste - Placeholder */}
+                    {/* Paste - Upcoming */}
                     <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                        <MagneticButton className="w-full">
-                            <button
-                                onClick={() => handleAction('Paste')}
-                                className="flex flex-col items-start p-8 rounded-2xl glass-panel w-full group transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-purple-500/10 hover:border-purple-500/30 text-left"
-                            >
-                                <div className="mb-6 p-4 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 group-hover:scale-110 group-hover:bg-purple-500 group-hover:text-white transition-all duration-300">
-                                    <LinkIcon size={32} />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">Paste Link</h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">YouTube, Website, or raw text</p>
-                            </button>
-                        </MagneticButton>
+                        <div className="relative flex flex-col items-start p-8 rounded-2xl glass-panel w-full cursor-not-allowed opacity-80 border-dashed border-2 text-left h-full">
+                            <div className="absolute top-4 right-4 bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                                Coming Soon
+                            </div>
+                            <div className="mb-6 p-4 rounded-xl bg-slate-100 dark:bg-surface-800 text-slate-400 dark:text-slate-500">
+                                <LinkIcon size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-400 dark:text-slate-500 mb-2">Paste Link</h3>
+                            <p className="text-sm text-slate-400 dark:text-slate-500">YouTube, Website, or raw text</p>
+                        </div>
                     </motion.div>
 
-                    {/* Record - Placeholder */}
+                    {/* Record - Upcoming */}
                     <motion.div variants={{ hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } }}>
-                        <MagneticButton className="w-full">
-                            <button
-                                onClick={() => handleAction('Record')}
-                                className="flex flex-col items-start p-8 rounded-2xl glass-panel w-full group transition-all duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-emerald-500/10 hover:border-emerald-500/30 text-left"
-                            >
-                                <div className="mb-6 p-4 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 group-hover:bg-emerald-500 group-hover:text-white transition-all duration-300">
-                                    <Mic size={32} />
-                                </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">Record Voice</h3>
-                                <p className="text-sm text-slate-500 dark:text-slate-400">Live lecture transcription</p>
-                            </button>
-                        </MagneticButton>
+                        <div className="relative flex flex-col items-start p-8 rounded-2xl glass-panel w-full cursor-not-allowed opacity-80 border-dashed border-2 text-left h-full">
+                            <div className="absolute top-4 right-4 bg-brand-100 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+                                Coming Soon
+                            </div>
+                            <div className="mb-6 p-4 rounded-xl bg-slate-100 dark:bg-surface-800 text-slate-400 dark:text-slate-500">
+                                <Mic size={32} />
+                            </div>
+                            <h3 className="text-xl font-bold text-slate-400 dark:text-slate-500 mb-2">Record Voice</h3>
+                            <p className="text-sm text-slate-400 dark:text-slate-500">Live lecture transcription</p>
+                        </div>
                     </motion.div>
                 </motion.div>
 

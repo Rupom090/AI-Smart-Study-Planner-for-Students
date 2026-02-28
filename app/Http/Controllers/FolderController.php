@@ -22,4 +22,17 @@ class FolderController extends Controller
             'materials' => $materials
         ]);
     }
+
+    /**
+     * Return all user materials as JSON for the sidebar.
+     */
+    public function apiIndex()
+    {
+        $materials = StudyMaterial::where('user_id', auth()->id())
+            ->with(['file', 'subject'])
+            ->latest()
+            ->get();
+
+        return response()->json($materials);
+    }
 }

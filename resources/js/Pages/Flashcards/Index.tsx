@@ -115,7 +115,7 @@ export default function Flashcards({ auth, subjects }: PageProps<{ subjects: any
                                 {error ? (
                                     <span className="text-red-500 font-medium">{error}</span>
                                 ) : (
-                                    <span>Min 50 characters recommended</span>
+                                    <span>Min 50 characters required</span>
                                 )}
                             </div>
                         </div>
@@ -123,7 +123,7 @@ export default function Flashcards({ auth, subjects }: PageProps<{ subjects: any
                         <div className="flex justify-end border-t border-surface-200 dark:border-surface-700 pt-6 mt-6">
                             <button
                                 onClick={handleGenerate}
-                                disabled={isGenerating || sourceText.trim() === ''}
+                                disabled={isGenerating || sourceText.trim().length < 50}
                                 className="px-8 py-3 rounded-xl bg-gradient-to-r from-brand-500 to-purple-500 hover:from-brand-600 hover:to-purple-600 text-white font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isGenerating ? (

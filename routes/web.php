@@ -21,10 +21,6 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/blog', function () {
-    return Inertia::render('Blog/Index');
-})->name('blog');
-
 Route::get('/dashboard', function () {
     $user = auth()->user();
 
@@ -56,10 +52,6 @@ Route::get('/dashboard', function () {
         'stats' => $stats
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
-
-Route::get('/pricing', function () {
-    return Inertia::render('Pricing');
-})->middleware(['auth', 'verified'])->name('pricing');
 
 Route::middleware('auth')->group(function () {
 
@@ -189,6 +181,7 @@ Route::middleware('auth')->group(function () {
 
     // Global File Manager
     Route::get('/folders', [\App\Http\Controllers\FolderController::class, 'index'])->name('folders.index');
+    Route::get('/api/folders', [\App\Http\Controllers\FolderController::class, 'apiIndex'])->name('folders.api');
 
     Route::post('/plans/generate', function (GeneratePlanRequest $request, StudyPlanGenerator $generator) {
         $user = auth()->user();

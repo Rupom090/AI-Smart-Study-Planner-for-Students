@@ -7,15 +7,17 @@ import ThemeToggle from '@/Components/ThemeToggle';
 import { Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import GlobalSearch from '@/Components/GlobalSearch';
+import FoldersSidebar from '@/Components/FoldersSidebar';
 
 export default function Authenticated({ user, header, children }: PropsWithChildren<{ user: User, header?: ReactNode }>) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
+    const [isFoldersOpen, setIsFoldersOpen] = useState(false);
 
     return (
-        <div className="min-h-screen bg-white dark:bg-studley-dark text-slate-900 dark:text-studley-gray font-sans selection:bg-brand-500/30 flex">
+        <div className="h-screen w-screen overflow-hidden bg-white dark:bg-studley-dark text-slate-900 dark:text-studley-gray font-sans selection:bg-brand-500/30 flex">
 
             {/* Sidebar (Desktop) */}
-            <aside className="hidden lg:flex flex-col w-64 fixed inset-y-0 z-50 bg-white/60 dark:bg-studley-dark/60 backdrop-blur-xl border-r border-brand-200/50 dark:border-white/10 transition-colors duration-300">
+            <aside className="hidden lg:flex flex-col w-64 h-full shrink-0 z-50 bg-white/60 dark:bg-studley-dark/60 backdrop-blur-xl border-r border-brand-200/50 dark:border-white/10 transition-colors duration-300">
                 {/* Logo */}
                 <div className="h-16 flex items-center px-6">
                     <Link href="/" className="flex items-center gap-2 text-brand-600 font-bold text-xl tracking-tight">
@@ -82,24 +84,6 @@ export default function Authenticated({ user, header, children }: PropsWithChild
                         <MessageSquareText size={20} />
                         Doc Chat
                     </Link>
-
-                    <button className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white transition-all text-left">
-                        <Smartphone size={20} />
-                        App
-                    </button>
-
-                    <div className="pt-4 mt-4 border-t border-brand-200/50 dark:border-white/10">
-                        <Link
-                            href={route('pricing')}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all duration-300 ${route().current('pricing')
-                                ? 'bg-gradient-to-r from-brand-500 to-purple-500 text-white shadow-md'
-                                : 'text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10'
-                                }`}
-                        >
-                            <Sparkles size={20} className={route().current('pricing') ? '' : 'animate-pulse'} />
-                            Upgrade to Pro
-                        </Link>
-                    </div>
                 </nav>
 
                 {/* User Profile */}
@@ -195,20 +179,6 @@ export default function Authenticated({ user, header, children }: PropsWithChild
                         <Layers size={20} />
                         Flashcards
                     </Link>
-
-                    <div className="pt-2 mt-2 border-t border-slate-200 dark:border-white/5">
-                        <Link
-                            href={route('pricing')}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${route().current('pricing')
-                                ? 'bg-gradient-to-r from-brand-500 to-purple-500 text-white'
-                                : 'text-brand-600 dark:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-500/10'
-                                }`}
-                            onClick={() => setShowingNavigationDropdown(false)}
-                        >
-                            <Sparkles size={20} />
-                            Upgrade to Pro
-                        </Link>
-                    </div>
                 </nav>
                 <div className="absolute bottom-0 w-full p-4 border-t border-slate-200 dark:border-white/5">
                     <div className="flex items-center gap-3 p-2">
@@ -226,7 +196,7 @@ export default function Authenticated({ user, header, children }: PropsWithChild
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 lg:ml-64 flex flex-col min-h-screen bg-slate-50/50 dark:bg-studley-dark/95 transition-colors duration-300">
+            <div className="flex-1 flex flex-col h-full overflow-y-auto relative bg-slate-50/50 dark:bg-studley-dark/95 transition-colors duration-300">
                 {/* Mobile Header */}
                 <header className="lg:hidden h-16 bg-white/80 dark:bg-studley-dark/80 backdrop-blur-xl border-b border-brand-200/50 dark:border-white/10 px-4 flex items-center justify-between sticky top-0 z-30">
                     <button onClick={() => setShowingNavigationDropdown(true)} className="text-slate-500 dark:text-slate-400 hover:text-brand-500 transition-colors">
@@ -240,16 +210,13 @@ export default function Authenticated({ user, header, children }: PropsWithChild
                 <header className="hidden lg:flex h-16 items-center justify-end px-8 gap-6 sticky top-0 z-30 bg-transparent">
                     <GlobalSearch />
                     <ThemeToggle />
-                    <Link
-                        href={route('folders.index')}
-                        className={`flex items-center gap-2 text-sm font-medium transition-colors outline-none cursor-pointer ${route().current('folders.*')
-                                ? 'text-brand-600 dark:text-brand-400'
-                                : 'text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400'
-                            }`}
+                    <button
+                        onClick={() => setIsFoldersOpen(true)}
+                        className={`flex items-center gap-2 text-sm font-medium transition-colors outline-none cursor-pointer text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400`}
                     >
                         <FolderClosed size={18} />
                         Folders
-                    </Link>
+                    </button>
                 </header>
 
                 {/* Main Slot with Framer Motion Page Transitions */}
@@ -266,6 +233,11 @@ export default function Authenticated({ user, header, children }: PropsWithChild
                     </motion.main>
                 </AnimatePresence>
             </div>
+
+            <FoldersSidebar
+                isOpen={isFoldersOpen}
+                onClose={() => setIsFoldersOpen(false)}
+            />
         </div>
     );
 }

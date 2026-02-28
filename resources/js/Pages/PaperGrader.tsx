@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, ArrowRight, CheckCircle, BarChart3, Clock, Loader2, RefreshCw, UploadCloud, X } from 'lucide-react';
 import { useState, useRef } from 'react';
 
+import Dropdown from '@/Components/Dropdown';
+
 // Define the expected shape of the AI response
 interface GradingResult {
     score: number;
@@ -15,9 +17,20 @@ interface GradingResult {
     actionable_tips: string[];
 }
 
+const RUBRIC_OPTIONS = [
+    "Standard Academic Essay",
+    "Creative Writing",
+    "Technical Report",
+    "Research Paper",
+    "Short Story",
+    "Poetry",
+    "Casual Blog Post"
+];
+
 export default function PaperGrader({ auth }: PageProps) {
     const [content, setContent] = useState('');
     const [document, setDocument] = useState<File | null>(null);
+    const [rubric, setRubric] = useState(RUBRIC_OPTIONS[0]);
     const [isGrading, setIsGrading] = useState(false);
     const [result, setResult] = useState<GradingResult | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -48,7 +61,7 @@ export default function PaperGrader({ auth }: PageProps) {
 
         try {
             const formData = new FormData();
-            formData.append('rubric', 'Standard Academic Essay');
+            formData.append('rubric', rubric);
             if (document) {
                 formData.append('document', document);
             } else {
@@ -180,10 +193,26 @@ export default function PaperGrader({ auth }: PageProps) {
                                     </div>
                                     <div>
                                         <h4 className="font-bold text-slate-900 dark:text-white text-sm">Grading Rubric</h4>
-                                        <p className="text-xs text-brand-600 dark:text-brand-400">Standard Academic Essay</p>
+                                        <p className="text-xs text-brand-600 dark:text-brand-400">{rubric}</p>
                                     </div>
                                 </div>
-                                <button className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 underline">Change Criteria</button>
+
+                                <Dropdown>
+                                    <Dropdown.Trigger>
+                                        <button className="text-sm font-medium text-brand-600 dark:text-brand-400 hover:text-brand-700 underline focus:outline-none">Change Criteria</button>
+                                    </Dropdown.Trigger>
+                                    <Dropdown.Content contentClasses="py-1 bg-white dark:bg-studley-dark rounded-xl shadow-xl border border-slate-200 dark:border-white/10 w-56">
+                                        {RUBRIC_OPTIONS.map(option => (
+                                            <button
+                                                key={option}
+                                                onClick={() => setRubric(option)}
+                                                className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${rubric === option ? 'bg-brand-50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 font-bold' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                                            >
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </Dropdown.Content>
+                                </Dropdown>
                             </div>
 
                             <div className="mt-6 flex justify-end">

@@ -1,0 +1,9 @@
+Source: https://docsbot.ai/prompts/programming
+
+- **Collection of AI Prompts for Developers**: The page offers 20+ ready-to-use prompts optimized for programming tasks, categorized by use cases like code generation, debugging, refactoring, testing, and documentation to boost productivity with LLMs like GPT or Claude.
+- **Key Prompt Categories**:
+  - **Code Creation**: Prompts for generating functions, algorithms, or full apps in languages like Python, JavaScript, or Rust (e.g., "Write a REST API endpoint...").
+  - **Debugging & Optimization**: Guides for identifying bugs, performance issues, or security vulnerabilities with step-by-step analysis.
+  - **Learning & Explanation**: Explains complex code, designs system architectures, or teaches new frameworks.
+- **Best Practices**: Emphasizes providing context (e.g., language, constraints), specifying output format (e.g., "Include comments and tests"), and iterating prompts for refinement; includes tips for role-playing (e.g., "Act as a senior engineer").
+- **Takeaways**: These prompts save time, improve code quality, and enable non-experts to tackle advanced tasks; users can copy-paste directly into AI tools, with examples demonstrating real-world applicability.

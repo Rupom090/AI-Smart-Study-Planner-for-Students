@@ -2,7 +2,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { PageProps } from '@/types';
-import PrimaryButton from '@/Components/PrimaryButton';
+import PrimaryButton from '@/Components/UI/PrimaryButton';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 
 interface StudyPlanProps extends PageProps {
@@ -244,11 +244,16 @@ export default function StudyPlan({ auth, plan = null }: StudyPlanProps) {
                                                                 : 'border-white/5 bg-surface-800/40 hover:bg-surface-800/80 hover:border-white/10'
                                                         }`}
                                                 >
-                                                    {/* Timeline Node */}
-                                                    <div className={`absolute -left-10 md:-left-16 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-4 border-surface-950 flex items-center justify-center font-bold text-xs shadow-lg transition-colors duration-500
+                                                    <div className={`absolute -left-10 md:-left-16 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full border-4 border-surface-950 flex items-center justify-center font-bold text-xs shadow-lg transition-colors duration-500 overflow-hidden cursor-pointer
                                                         ${task.status === 'completed' ? 'bg-emerald-500 text-slate-900 shadow-[0_0_15px_rgba(16,185,129,0.5)]'
-                                                            : task.status === 'in_progress' ? 'bg-brand-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse'
-                                                                : 'bg-surface-800 text-slate-500'}`}
+                                                            : task.status === 'in_progress' ? 'bg-brand-500 text-white shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-pulse hover:bg-emerald-500 hover:text-white'
+                                                                : 'bg-surface-800 text-slate-500 hover:bg-emerald-500/50 hover:text-white'}`}
+                                                        onClick={() => {
+                                                            if (task.status !== 'completed') {
+                                                                handleUpdateStatus(task.id, 'completed');
+                                                            }
+                                                        }}
+                                                        title={task.status !== 'completed' ? "Mark as complete" : ""}
                                                     >
                                                         {task.status === 'completed' ? '✓' : index + 1}
                                                     </div>
@@ -264,9 +269,23 @@ export default function StudyPlan({ auth, plan = null }: StudyPlanProps) {
                                                                 </p>
                                                             </div>
 
-                                                            <h4 className={`font-bold text-xl mb-1 transition-colors ${task.status === 'completed' ? 'text-slate-300 line-through decoration-slate-500/50' : 'text-white'}`}>
-                                                                {task.task_title}
-                                                            </h4>
+                                                            <div className="flex items-center gap-3">
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={task.status === 'completed'}
+                                                                    onChange={() => {
+                                                                        if (task.status !== 'completed') {
+                                                                            handleUpdateStatus(task.id, 'completed');
+                                                                        } else {
+                                                                            handleUpdateStatus(task.id, 'pending'); // allow uncheck
+                                                                        }
+                                                                    }}
+                                                                    className="w-5 h-5 rounded-md border-slate-600 bg-surface-900/50 text-emerald-500 focus:ring-emerald-500/50 transition-all cursor-pointer"
+                                                                />
+                                                                <h4 className={`font-bold text-xl mb-1 transition-colors ${task.status === 'completed' ? 'text-slate-300 line-through decoration-slate-500/50' : 'text-white'}`}>
+                                                                    {task.task_title}
+                                                                </h4>
+                                                            </div>
                                                             <p className="text-sm text-slate-400 flex items-center gap-2">
                                                                 <span className="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
                                                                 <strong className="text-slate-300">{task.topic.subject.name}</strong>

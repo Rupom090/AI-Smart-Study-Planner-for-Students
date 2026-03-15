@@ -1,5 +1,5 @@
 import React, { PropsWithChildren } from 'react';
-import SmoothScroll from '@/Components/SmoothScroll';
+import SmoothScroll from '@/Components/Animation/SmoothScroll';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MainLayout({ children }: PropsWithChildren) {

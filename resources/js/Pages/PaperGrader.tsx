@@ -4,8 +4,9 @@ import { PageProps } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, ArrowRight, CheckCircle, BarChart3, Clock, Loader2, RefreshCw, UploadCloud, X } from 'lucide-react';
 import { useState, useRef } from 'react';
+import { puterChat, parseJsonFromAi, uploadFileToPuter, deleteFromPuter, MODELS, getUserFriendlyAiError } from '@/Utils/puterAI';
 
-import Dropdown from '@/Components/Dropdown';
+import Dropdown from '@/Components/UI/Dropdown';
 
 // Define the expected shape of the AI response
 interface GradingResult {
@@ -59,33 +60,66 @@ export default function PaperGrader({ auth }: PageProps) {
         setError(null);
         setResult(null);
 
+        let puterPath: string | null = null;
+
         try {
-            const formData = new FormData();
-            formData.append('rubric', rubric);
+            const jsonSchema = `{
+    "score": 85,
+    "letter_grade": "B",
+    "feedback_summary": "2-3 sentence overall summary.",
+    "grammar_syntax": ["Grammar note 1", "Grammar note 2"],
+    "argument_structure": ["Argument note"],
+    "actionable_tips": ["Tip the student can apply right now"]
+}`;
+
+            const gradePrompt = `You are an expert academic grader. Grade the following text using the '${rubric}' rubric.\n\nRespond STRICTLY with a valid JSON object (no markdown, no extra text):\n${jsonSchema}\n\nTEXT TO GRADE:\n${content.substring(0, 6000)}`;
+
+            let prompt: string | object[] = gradePrompt;
             if (document) {
-                formData.append('document', document);
-            } else {
-                formData.append('content', content);
+                puterPath = await uploadFileToPuter(document);
+                prompt = [{
+                    role: 'user',
+                    content: [
+                        { type: 'file', puter_path: puterPath },
+                        { type: 'text', text: `You are an expert academic grader. Grade this document using the '${rubric}' rubric.
+
+Respond STRICTLY with a valid JSON object (no markdown, no extra text):
+${jsonSchema}` }
+                    ]
+                }];
             }
 
-            const response = await fetch('/api/v1/paper-grader', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                body: formData
+            const rawOutput = await puterChat(prompt, {
+                model: MODELS.DOCUMENT,
+                max_tokens: 900,
             });
 
-            const data = await response.json();
+            const parsedPayload = parseJsonFromAi(rawOutput);
+            const parsedResult = {
+                score: Number(parsedPayload?.score ?? 0),
+                letter_grade: (parsedPayload?.letter_grade ?? '').toString().trim(),
+                feedback_summary: (parsedPayload?.feedback_summary ?? '').toString().trim(),
+                grammar_syntax: Array.isArray(parsedPayload?.grammar_syntax)
+                    ? parsedPayload.grammar_syntax.map((item: any) => String(item)).filter((item: string) => item.trim().length > 0)
+                    : [],
+                argument_structure: Array.isArray(parsedPayload?.argument_structure)
+                    ? parsedPayload.argument_structure.map((item: any) => String(item)).filter((item: string) => item.trim().length > 0)
+                    : [],
+                actionable_tips: Array.isArray(parsedPayload?.actionable_tips)
+                    ? parsedPayload.actionable_tips.map((item: any) => String(item)).filter((item: string) => item.trim().length > 0)
+                    : [],
+            } as GradingResult;
 
-            if (!response.ok || data.feedback?.error) {
-                throw new Error(data.feedback?.message || data.message || "Failed to grade paper.");
+            if (!Number.isFinite(parsedResult.score) || !parsedResult.feedback_summary) {
+                throw new Error('Invalid structure returned from AI.');
             }
 
-            setResult(data.feedback);
+            setResult(parsedResult);
         } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred.');
+            console.error('Grader Error:', err);
+            setError(getUserFriendlyAiError(err, 'Paper grading is temporarily unavailable. Please try again.'));
         } finally {
+            if (puterPath) await deleteFromPuter(puterPath);
             setIsGrading(false);
         }
     };

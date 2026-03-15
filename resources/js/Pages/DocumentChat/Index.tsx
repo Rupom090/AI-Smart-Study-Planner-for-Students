@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquareText, Send, Loader2, FileText, ChevronRight, Bot, User as UserIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { puterChatStream, MODELS, getUserFriendlyAiError } from '@/Utils/puterAI';
 
 interface ChatMessage {
     role: 'user' | 'assistant' | 'system';
@@ -46,28 +47,37 @@ export default function DocumentChat({ auth, subjects, activeMaterial }: PagePro
         setIsThinking(true);
 
         try {
-            const response = await fetch('/api/v1/document-chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+            const docContext = (activeDoc?.content_extracted || activeDoc?.content || 'No text content available.').toString();
+            const safeDocContext = docContext.substring(0, 8000);
+            const recentHistory = messages.slice(-8);
+
+            // Build Context-Aware Multi-Turn Grok Array
+            const conversationHistory = [
+                {
+                    role: 'system',
+                    content: `You are a helpful AI Document Assistant. You must answer the user's questions based primarily on the provided document context. If the answer cannot be found in the context, you may use your general knowledge but clarify that it wasn't mentioned in the text.\n\n---START DOCUMENT---\nTITLE: ${activeDoc?.title || 'Unknown'}\n\n${safeDocContext}\n---END DOCUMENT---`
                 },
-                body: JSON.stringify({
-                    material_id: selectedMaterialId,
-                    message: userMsg,
-                    history: messages // pass previous history
-                })
-            });
+                ...recentHistory.map(m => ({ role: m.role, content: m.content })),
+                { role: 'user', content: userMsg }
+            ];
 
-            const data = await response.json();
+            // Add placeholder streaming message
+            setMessages([...newHistory, { role: 'assistant', content: '' }]);
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to get a response.');
-            }
-
-            setMessages([...newHistory, { role: 'assistant', content: data.reply }]);
+            await puterChatStream(
+                conversationHistory,
+                (_, accumulated) => {
+                    setMessages(prev => [
+                        ...prev.slice(0, -1),
+                        { role: 'assistant', content: accumulated }
+                    ]);
+                },
+                { model: MODELS.DOCUMENT, max_tokens: 900 }
+            );
         } catch (err: any) {
-            setMessages([...newHistory, { role: 'assistant', content: `**Error:** ${err.message}` }]);
+            console.error('Chat Error:', err);
+            const readableError = getUserFriendlyAiError(err, 'I could not answer right now. Please try again in a moment.');
+            setMessages([...newHistory, { role: 'assistant', content: readableError }]);
         } finally {
             setIsThinking(false);
         }
@@ -156,14 +166,14 @@ export default function DocumentChat({ auth, subjects, activeMaterial }: PagePro
                                         className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                                     >
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
-                                                ? 'bg-brand-600 text-white'
-                                                : 'bg-purple-600 text-white'
+                                            ? 'bg-brand-600 text-white'
+                                            : 'bg-purple-600 text-white'
                                             }`}>
                                             {msg.role === 'user' ? <UserIcon size={16} /> : <Bot size={16} />}
                                         </div>
                                         <div className={`max-w-[85%] rounded-2xl px-5 py-3.5 shadow-sm ${msg.role === 'user'
-                                                ? 'bg-brand-600 text-white rounded-tr-sm'
-                                                : 'bg-white dark:bg-surface-800 text-slate-900 dark:text-white border border-surface-200 dark:border-surface-700 rounded-tl-sm'
+                                            ? 'bg-brand-600 text-white rounded-tr-sm'
+                                            : 'bg-white dark:bg-surface-800 text-slate-900 dark:text-white border border-surface-200 dark:border-surface-700 rounded-tl-sm'
                                             }`}>
                                             <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50">
                                                 {msg.role === 'user' ? (

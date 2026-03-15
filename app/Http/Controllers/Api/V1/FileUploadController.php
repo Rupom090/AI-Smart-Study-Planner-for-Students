@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Api\BaseApiController;
+use App\Jobs\ProcessStudyMaterialJob;
 use App\Models\File;
+use App\Models\StudyMaterial;
 use App\Services\FileUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,25 +26,37 @@ class FileUploadController extends BaseApiController
     public function upload(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'file' => 'required|file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf',
+            'file' => 'required|file|max:10240|mimes:jpg,jpeg,png,gif,webp,pdf,txt,doc,docx,md,pptx,ppt',
             'use_cloudinary' => 'boolean',
         ]);
 
         if ($validator->fails()) {
             return $this->errorResponse(
-                'Validation failed', 
-                422, 
+                'Validation failed',
+                422,
                 $validator->errors()
             );
         }
 
         try {
-            $useCloudinary = $request->input('use_cloudinary', true);
+            $useCloudinary = $request->input('use_cloudinary', false);
             $file = $this->fileUploadService->uploadFile(
                 $request->file('file'),
                 $request->user()->id,
                 $useCloudinary
             );
+
+            // Also create a StudyMaterial record so it shows in Folders
+            $material = StudyMaterial::create([
+                'user_id' => $request->user()->id,
+                'file_id' => $file->id,
+                'title' => pathinfo($file->original_name, PATHINFO_FILENAME),
+                'document_type' => $file->file_type,
+                'status' => 'pending',
+            ]);
+
+            // Dispatch job to process and analyze the material
+            ProcessStudyMaterialJob::dispatch($material);
 
             return $this->successResponse([
                 'file' => [
@@ -57,12 +71,13 @@ class FileUploadController extends BaseApiController
                     'metadata' => $file->metadata,
                     'created_at' => $file->created_at,
                 ],
+                'material_id' => $material->id,
             ], 'File uploaded successfully', 201);
         } catch (\InvalidArgumentException $e) {
             return $this->errorResponse($e->getMessage(), 422);
         } catch (\Exception $e) {
             return $this->errorResponse(
-                'File upload failed: ' . $e->getMessage(), 
+                'File upload failed: ' . $e->getMessage(),
                 500
             );
         }
@@ -81,8 +96,8 @@ class FileUploadController extends BaseApiController
 
         if ($validator->fails()) {
             return $this->errorResponse(
-                'Validation failed', 
-                422, 
+                'Validation failed',
+                422,
                 $validator->errors()
             );
         }
@@ -100,6 +115,18 @@ class FileUploadController extends BaseApiController
                         $useCloudinary
                     );
 
+                    // Create a StudyMaterial record
+                    $material = StudyMaterial::create([
+                        'user_id' => $request->user()->id,
+                        'file_id' => $uploadedFile->id,
+                        'title' => pathinfo($uploadedFile->original_name, PATHINFO_FILENAME),
+                        'document_type' => $uploadedFile->file_type,
+                        'status' => 'pending',
+                    ]);
+
+                    // Dispatch job to process and analyze the material
+                    ProcessStudyMaterialJob::dispatch($material);
+
                     $uploadedFiles[] = [
                         'id' => $uploadedFile->id,
                         'filename' => $uploadedFile->filename,
@@ -111,6 +138,7 @@ class FileUploadController extends BaseApiController
                         'file_type' => $uploadedFile->file_type,
                         'metadata' => $uploadedFile->metadata,
                         'created_at' => $uploadedFile->created_at,
+                        'material_id' => $material->id,
                     ];
                 } catch (\Exception $e) {
                     $errors[] = [

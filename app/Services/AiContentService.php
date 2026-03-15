@@ -25,15 +25,15 @@ class AiContentService
      */
     public function extractText(File $file): string
     {
-        $path = $file->storage_path ?? storage_path('app/' . $file->path); // Adjust based on your File model storage
+        $url = $file->url ?? null;
+        $path = $file->storage_path ?? storage_path('app/' . $file->path);
 
-        if (!file_exists($path)) {
-            // Fallback for demo/cloud urls if local file missing
+        if (!$url && !file_exists($path)) {
             return "File content not accessible for extraction.";
         }
 
         if ($file->mime_type === 'application/pdf') {
-            return $this->extractPdfText($path);
+            return $this->extractPdfText($url ?: $path, (bool) $url);
         }
 
         if (str_starts_with($file->mime_type, 'image/')) {
@@ -41,15 +41,26 @@ class AiContentService
         }
 
         // Fallback for text files
-        return file_get_contents($path);
+        try {
+            return file_get_contents($url ?: $path);
+        } catch (\Exception $e) {
+            return "Could not read text file.";
+        }
     }
 
-    protected function extractPdfText(string $path): string
+    protected function extractPdfText(string $source, bool $isUrl = false): string
     {
         if (class_exists(Parser::class)) {
             try {
                 $parser = new Parser();
-                $pdf = $parser->parseFile($path);
+                if ($isUrl) {
+                    $content = file_get_contents($source);
+                    if (!$content)
+                        throw new \Exception("Could not fetch PDF from URL");
+                    $pdf = $parser->parseContent($content);
+                } else {
+                    $pdf = $parser->parseFile($source);
+                }
                 return $pdf->getText();
             } catch (\Exception $e) {
                 Log::error("PDF Parsing failed: " . $e->getMessage());

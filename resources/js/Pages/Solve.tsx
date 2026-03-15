@@ -2,48 +2,132 @@ import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckSquare, UploadCloud, Search, Sparkles, Loader2, FileImage } from 'lucide-react';
+import { CheckSquare, UploadCloud, Search, Sparkles, Loader2, FileImage, FileText, X, Globe } from 'lucide-react';
 import { useState, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { puterChatStream, uploadFileToPuter, deleteFromPuter, MODELS, getUserFriendlyAiError } from '@/Utils/puterAI';
+
+/** Styled component map — gives every markdown element proper spacing & typography */
+const mdComponents: React.ComponentProps<typeof ReactMarkdown>['components'] = {
+    h1: ({ children }) => <h1 className="text-2xl font-extrabold text-brand-700 dark:text-brand-300 mt-8 mb-3 border-b border-brand-200 dark:border-brand-700 pb-2">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-xl font-bold text-brand-600 dark:text-brand-400 mt-7 mb-3">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-lg font-semibold text-slate-800 dark:text-slate-200 mt-5 mb-2">{children}</h3>,
+    h4: ({ children }) => <h4 className="text-base font-semibold text-slate-700 dark:text-slate-300 mt-4 mb-1">{children}</h4>,
+    p:  ({ children }) => <p  className="text-slate-700 dark:text-slate-300 leading-relaxed mb-4">{children}</p>,
+    ul: ({ children }) => <ul className="list-disc list-outside pl-5 mb-4 space-y-1 text-slate-700 dark:text-slate-300">{children}</ul>,
+    ol: ({ children }) => <ol className="list-decimal list-outside pl-5 mb-4 space-y-1 text-slate-700 dark:text-slate-300">{children}</ol>,
+    li: ({ children }) => <li className="leading-relaxed">{children}</li>,
+    strong: ({ children }) => <strong className="font-semibold text-slate-900 dark:text-white">{children}</strong>,
+    em: ({ children }) => <em className="italic text-slate-600 dark:text-slate-400">{children}</em>,
+    blockquote: ({ children }) => <blockquote className="border-l-4 border-brand-400 dark:border-brand-600 pl-4 my-4 text-slate-600 dark:text-slate-400 italic">{children}</blockquote>,
+    code: ({ inline, children }: any) => inline
+        ? <code className="bg-slate-100 dark:bg-slate-800 text-brand-600 dark:text-brand-300 rounded px-1.5 py-0.5 text-sm font-mono">{children}</code>
+        : <code className="block bg-slate-900 dark:bg-slate-950 text-slate-50 rounded-xl p-4 my-4 text-sm font-mono overflow-x-auto whitespace-pre">{children}</code>,
+    pre: ({ children }) => <>{children}</>,
+    hr:  () => <hr className="my-6 border-slate-200 dark:border-slate-700" />,
+    table: ({ children }) => <div className="overflow-x-auto my-4"><table className="w-full border-collapse text-sm">{children}</table></div>,
+    th: ({ children }) => <th className="border border-slate-300 dark:border-slate-600 bg-slate-100 dark:bg-slate-800 px-3 py-2 text-left font-semibold">{children}</th>,
+    td: ({ children }) => <td className="border border-slate-300 dark:border-slate-600 px-3 py-2">{children}</td>,
+};
 
 export default function Solve({ auth }: PageProps) {
     const [question, setQuestion] = useState('');
     const [image, setImage] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [uploadedDoc, setUploadedDoc] = useState<File | null>(null);
+    const [isExtracting, setIsExtracting] = useState(false);
     const [isSolving, setIsSolving] = useState(false);
     const [solution, setSolution] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [useWebSearch, setUseWebSearch] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const docInputRef = useRef<HTMLInputElement>(null);
 
     const handleTextSubmit = async () => {
-        if (!question.trim()) return;
+        if (!question.trim() && !uploadedDoc) return;
 
         setIsSolving(true);
         setError(null);
-        setSolution(null);
+        setSolution('');
         setImage(null);
         setImagePreview(null);
 
+        let puterPath: string | null = null;
         try {
-            const response = await fetch('/api/v1/solve/text', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({ question })
-            });
+            let prompt: string | object[];
+            if (uploadedDoc) {
+                puterPath = await uploadFileToPuter(uploadedDoc);
+                prompt = [{
+                    role: 'user',
+                    content: [
+                        { type: 'file', puter_path: puterPath },
+                        {
+                            type: 'text',
+                            text: `You are an expert tutor. Analyze this uploaded document and solve all problems step-by-step.
 
-            const data = await response.json();
+Formatting rules (strictly follow):
+- Use ## for major sections (e.g. ## Document Overview, ## Key Concepts, ## Solutions)
+- Use ### for sub-sections or individual questions
+- Use **bold** for key terms and important points
+- Use numbered lists (1. 2. 3.) for sequential steps
+- Use bullet lists for non-sequential points
+- Add a blank line between every section
+- Keep answers clear, concise, and well-spaced — avoid walls of text
+- End with a ## Summary section
 
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to solve problem.");
+${question && question.startsWith('[Document loaded:') ? '' : `User instruction: ${question}`}`.trim()
+                        }
+                    ]
+                }];
+            } else {
+                prompt = `You are an expert tutor. Solve the following problem step-by-step.
+
+Formatting rules (strictly follow):
+- Use ## headings for major sections
+- Use ### for sub-steps or sub-topics
+- Use **bold** for key terms
+- Use numbered lists for sequential steps, bullet lists for concepts
+- Add spacing between sections — avoid dense walls of text
+- End with a ## Summary
+
+Problem:
+${question}`;
             }
 
-            setSolution(data.solution);
+            // File content type (puter_path) is only supported by document-capable models.
+            // Web search is only available on OpenAI models — skip it when a doc is attached.
+            const opts = uploadedDoc
+                ? { model: MODELS.DOCUMENT, max_tokens: 1200 }
+                : useWebSearch
+                    ? { model: MODELS.WEBSEARCH, tools: [{ type: 'web_search' }], max_tokens: 700 }
+                    : { model: MODELS.DEFAULT, max_tokens: 900 };
+
+            try {
+                await puterChatStream(
+                    prompt,
+                    (_, accumulated) => setSolution(accumulated),
+                    opts
+                );
+            } catch (streamErr: any) {
+                const canFallback = !uploadedDoc && useWebSearch;
+                if (!canFallback) {
+                    throw streamErr;
+                }
+
+                setSolution('');
+                await puterChatStream(
+                    prompt,
+                    (_, accumulated) => setSolution(accumulated),
+                    { model: MODELS.DEFAULT, max_tokens: 900 }
+                );
+            }
         } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred.');
+            console.error('AI Solver Error:', err);
+            setError(getUserFriendlyAiError(err, 'AI solver is temporarily unavailable. Please try again.'));
+            setSolution(null);
         } finally {
+            if (puterPath) await deleteFromPuter(puterPath);
             setIsSolving(false);
         }
     };
@@ -52,49 +136,66 @@ export default function Solve({ auth }: PageProps) {
         const file = e.target.files?.[0];
         if (file) {
             setImage(file);
-            setQuestion(''); // Clear text when image is uploaded
-
-            // Create preview
+            setQuestion('');
+            setUploadedDoc(null);
             const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
+            reader.onloadend = () => setImagePreview(reader.result as string);
             reader.readAsDataURL(file);
         }
     };
 
+    // Upload doc to Puter filesystem — AI reads it directly, no backend needed
+    const handleDocChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadedDoc(file);
+        setImage(null);
+        setImagePreview(null);
+        setError(null);
+        setIsExtracting(true);
+        setQuestion(`[Document loaded: ${file.name}] Please analyze and solve any problems in this document.`);
+        setIsExtracting(false);
+    };
+
     const handleImageSubmit = async () => {
         if (!image) return;
-
         setIsSolving(true);
         setError(null);
-        setSolution(null);
-
+        setSolution('');
+        let puterPath: string | null = null;
         try {
-            const formData = new FormData();
-            formData.append('image', image);
+            // Upload image to Puter and pass via puter_path content type
+            puterPath = await uploadFileToPuter(image);
+            const messages = [{
+                role: 'user',
+                content: [
+                    { type: 'file', puter_path: puterPath },
+                    { type: 'text', text: `You are an expert tutor. Analyze this image and solve the problem shown step-by-step.
 
-            const response = await fetch('/api/v1/solve/image', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                body: formData
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.message || "Failed to solve problem from image.");
-            }
-
-            setSolution(data.solution);
+Formatting rules:
+- Use ## for major sections
+- Use ### for sub-steps
+- Use **bold** for key terms
+- Use numbered lists for steps, bullets for concepts
+- Space out sections — no walls of text
+- End with a ## Summary` }
+                ]
+            }];
+            await puterChatStream(
+                messages,
+                (_, accumulated) => setSolution(accumulated),
+                { model: MODELS.VISION, max_tokens: 900 }
+            );
         } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred.');
+            console.error('Vision Error:', err);
+            setError(getUserFriendlyAiError(err, 'Image analysis is temporarily unavailable. Please try again.'));
+            setSolution(null);
         } finally {
+            if (puterPath) await deleteFromPuter(puterPath);
             setIsSolving(false);
         }
     };
+
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Solve - Studley AI" />
@@ -122,14 +223,20 @@ export default function Solve({ auth }: PageProps) {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             transition={{ duration: 0.4, delay: 0.1 }}
-                            onClick={() => fileInputRef.current?.click()}
-                            className={`bg-white dark:bg-surface-800 rounded-2xl border-2 border-dashed ${imagePreview ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-500/10' : 'border-brand-200 dark:border-surface-700'} p-12 text-center hover:border-brand-500 dark:hover:border-brand-500/50 transition-colors group cursor-pointer relative overflow-hidden`}
+                            className={`bg-white dark:bg-surface-800 rounded-2xl border-2 border-dashed ${imagePreview ? 'border-brand-500 bg-brand-50/50 dark:bg-brand-500/10' : uploadedDoc ? 'border-green-400 bg-green-50/30 dark:bg-green-500/5' : 'border-brand-200 dark:border-surface-700'} p-12 text-center hover:border-brand-500 dark:hover:border-brand-500/50 transition-colors group cursor-default relative overflow-hidden`}
                         >
                             <input
                                 type="file"
                                 ref={fileInputRef}
                                 onChange={handleImageChange}
                                 accept="image/png, image/jpeg, image/webp"
+                                className="hidden"
+                            />
+                            <input
+                                type="file"
+                                ref={docInputRef}
+                                onChange={handleDocChange}
+                                accept=".pdf,.txt,.md,.docx"
                                 className="hidden"
                             />
 
@@ -170,6 +277,35 @@ export default function Solve({ auth }: PageProps) {
                                             </button>
                                         </div>
                                     </motion.div>
+                                ) : uploadedDoc ? (
+                                    <motion.div
+                                        key="doc-loaded"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                        className="relative z-10 flex flex-col items-center"
+                                    >
+                                        {isExtracting ? (
+                                            <>
+                                                <Loader2 className="animate-spin w-12 h-12 text-brand-500 mb-4" />
+                                                <p className="text-slate-600 dark:text-slate-400 font-medium">Extracting text from document...</p>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <div className="w-20 h-20 bg-green-100 dark:bg-green-500/20 rounded-full flex items-center justify-center mb-4 text-green-600 dark:text-green-400">
+                                                    <FileText size={36} />
+                                                </div>
+                                                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-1">{uploadedDoc.name}</h3>
+                                                <p className="text-sm text-green-600 dark:text-green-400 font-medium mb-4">✓ Document ready for AI analysis</p>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); setUploadedDoc(null); setQuestion(''); }}
+                                                    className="text-xs text-slate-400 hover:text-red-500 underline flex items-center gap-1"
+                                                >
+                                                    <X size={12} /> Remove document
+                                                </button>
+                                            </>
+                                        )}
+                                    </motion.div>
                                 ) : (
                                     <motion.div
                                         key="upload"
@@ -182,13 +318,24 @@ export default function Solve({ auth }: PageProps) {
                                         <div className="w-20 h-20 bg-brand-100 dark:bg-surface-700 rounded-full flex items-center justify-center mb-6 text-brand-500 shadow-sm group-hover:scale-110 transition-transform">
                                             <UploadCloud size={32} />
                                         </div>
-                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Upload or drop an image</h3>
+                                        <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Upload a file to solve</h3>
                                         <p className="text-slate-500 dark:text-slate-400 mb-6 max-w-sm">
-                                            Supported formats: JPEG, PNG, WEBP. Make sure the text or math notation is clearly legible.
+                                            Drag & drop or click. Supports: JPEG, PNG, WEBP (image), PDF, TXT, DOCX (document).
                                         </p>
-                                        <button className="px-6 py-3 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold transition-all shadow-md hover:shadow-lg">
-                                            Browse Files
-                                        </button>
+                                        <div className="flex gap-3">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                                                className="px-5 py-2.5 rounded-full bg-brand-600 hover:bg-brand-700 text-white font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                                            >
+                                                <FileImage size={16} /> Image
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); docInputRef.current?.click(); }}
+                                                className="px-5 py-2.5 rounded-full bg-slate-700 hover:bg-slate-800 dark:bg-surface-700 dark:hover:bg-surface-600 text-white font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+                                            >
+                                                <FileText size={16} /> Document
+                                            </button>
+                                        </div>
                                     </motion.div>
                                 )}
                             </AnimatePresence>
@@ -197,27 +344,43 @@ export default function Solve({ auth }: PageProps) {
                         <div className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-6 shadow-sm">
                             <div className="flex items-center gap-3 border-b border-surface-200 dark:border-surface-700 pb-4 mb-4">
                                 <Search className="w-5 h-5 text-slate-400" />
-                                <input
-                                    type="text"
-                                    value={question}
-                                    onChange={(e) => setQuestion(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter') handleTextSubmit(); }}
-                                    placeholder="Or paste your question text here..."
-                                    className="w-full bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white placeholder-slate-400 disabled:opacity-50"
-                                    disabled={isSolving || !!imagePreview}
-                                />
+                                {uploadedDoc && !isExtracting ? (
+                                    <span className="text-sm text-slate-600 dark:text-slate-400 font-medium flex-1">Document loaded – click "Solve It" to analyze with AI</span>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={question}
+                                        onChange={(e) => setQuestion(e.target.value)}
+                                        onKeyDown={(e) => { if (e.key === 'Enter') handleTextSubmit(); }}
+                                        placeholder="Or paste your question text here..."
+                                        className="w-full bg-transparent border-none focus:ring-0 text-slate-900 dark:text-white placeholder-slate-400 disabled:opacity-50"
+                                        disabled={isSolving || !!imagePreview || isExtracting}
+                                    />
+                                )}
                             </div>
 
-                            {error && (
-                                <div className="mb-4 text-sm text-red-500">
-                                    {error}
-                                </div>
-                            )}
+                            {/* Web Search Toggle */}
+                            <div className="flex items-center gap-2 mb-4">
+                                <button
+                                    onClick={() => setUseWebSearch(w => !w)}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                                        useWebSearch
+                                            ? 'bg-blue-600 text-white shadow-md'
+                                            : 'bg-slate-100 dark:bg-surface-700 text-slate-500 dark:text-slate-400 hover:bg-slate-200'
+                                    }`}
+                                >
+                                    <Globe size={13} />
+                                    Web Search {useWebSearch ? 'ON' : 'OFF'}
+                                </button>
+                                {useWebSearch && (
+                                    <span className="text-xs text-blue-500">AI will search the web for up-to-date answers</span>
+                                )}
+                            </div>
 
                             <div className="flex justify-end">
                                 <button
                                     onClick={handleTextSubmit}
-                                    disabled={isSolving || !question.trim() || !!imagePreview}
+                                    disabled={isSolving || isExtracting || (!question.trim() && !uploadedDoc) || !!imagePreview}
                                     className="px-5 py-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-medium hover:bg-slate-800 dark:hover:bg-slate-200 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isSolving && question ? <Loader2 className="animate-spin w-4 h-4" /> : <Sparkles size={16} />}
@@ -241,8 +404,8 @@ export default function Solve({ auth }: PageProps) {
                                         <h2 className="text-xl font-bold text-slate-900 dark:text-white">AI Solution</h2>
                                     </div>
 
-                                    <div className="prose prose-slate dark:prose-invert max-w-none prose-headings:text-brand-700 dark:prose-headings:text-brand-300 prose-pre:bg-slate-900 prose-pre:text-slate-50">
-                                        <ReactMarkdown>{solution}</ReactMarkdown>
+                                    <div className="max-w-none">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{solution}</ReactMarkdown>
                                     </div>
                                 </motion.div>
                             )}

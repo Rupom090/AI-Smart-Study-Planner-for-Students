@@ -6,6 +6,9 @@ import { PageProps as AppPageProps } from './';
 declare global {
     interface Window {
         axios: AxiosInstance;
+        puter: any;
+        SpeechRecognition: any;
+        webkitSpeechRecognition: any;
     }
 
     /* eslint-disable no-var */
@@ -13,5 +16,5 @@ declare global {
 }
 
 declare module '@inertiajs/core' {
-    interface PageProps extends InertiaPageProps, AppPageProps {}
+    interface PageProps extends InertiaPageProps, AppPageProps { }
 }

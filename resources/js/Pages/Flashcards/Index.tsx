@@ -2,26 +2,61 @@ import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Layers, Sparkles, BookOpen, Loader2, ArrowRight, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
+import { Layers, Sparkles, BookOpen, Loader2, ArrowRight, RefreshCw, UploadCloud, X } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { puterChat, parseJsonFromAi, uploadFileToPuter, deleteFromPuter, MODELS, getUserFriendlyAiError } from '@/Utils/puterAI';
 
 interface Flashcard {
     term: string;
     definition: string;
 }
 
+function normalizeFlashcards(payload: any): Flashcard[] {
+    const possibleCards = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.flashcards)
+            ? payload.flashcards
+            : Array.isArray(payload?.cards)
+                ? payload.cards
+                : [];
+
+    return possibleCards
+        .map((item: any) => {
+            const term = (item?.term ?? item?.title ?? item?.front ?? item?.question ?? item?.concept ?? '').toString().trim();
+            const definition = (item?.definition ?? item?.back ?? item?.answer ?? item?.explanation ?? item?.details ?? '').toString().trim();
+
+            if (!term || !definition) {
+                return null;
+            }
+
+            return { term, definition } as Flashcard;
+        })
+        .filter((card: Flashcard | null): card is Flashcard => Boolean(card));
+}
+
 export default function Flashcards({ auth, subjects }: PageProps<{ subjects: any[] }>) {
     const [sourceText, setSourceText] = useState('');
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
 
+    // Keep file locally; upload to Puter only when generating
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        setUploadedFile(file);
+        setSourceText('');
+        setError(null);
+    };
+
     const handleGenerate = async () => {
-        if (sourceText.length < 50) {
-            setError("Please provide more text (at least 50 characters) to generate meaningful flashcards.");
+        if (!uploadedFile && sourceText.length < 50) {
+            setError('Please provide more text (at least 50 characters) or upload a file to generate flashcards.');
             return;
         }
 
@@ -31,30 +66,51 @@ export default function Flashcards({ auth, subjects }: PageProps<{ subjects: any
         setCurrentCardIndex(0);
         setIsFlipped(false);
 
+        let puterPath: string | null = null;
         try {
-            const response = await fetch('/api/v1/flashcards/generate', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    source_text: sourceText,
-                    card_count: 10,
-                    difficulty: 'intermediate'
-                })
-            });
+            let prompt: string | object[];
 
-            const data = await response.json();
+            if (uploadedFile) {
+                puterPath = await uploadFileToPuter(uploadedFile);
+                prompt = [{
+                    role: 'user',
+                    content: [
+                        { type: 'file', puter_path: puterPath },
+                        { type: 'text', text: `You are an expert tutor. Extract exactly 10 key concepts from this document and create flashcards.
 
-            if (!response.ok || data.flashcards?.error) {
-                throw new Error(data.flashcards?.message || data.message || "Failed to generate flashcards.");
+Reply STRICTLY with a valid JSON array (no markdown, no extra text):
+[{"term": "Concept Name", "definition": "Clear, concise definition."}]` }
+                    ]
+                }];
+            } else {
+                const safeText = sourceText.substring(0, 6000);
+                prompt = `You are an expert tutor. Extract exactly 10 key concepts from the text and create flashcards.
+
+Reply STRICTLY with a valid JSON array (no markdown, no extra text):
+[{"term": "Concept Name", "definition": "Clear, concise definition."}]
+
+SOURCE TEXT:
+${safeText}`;
             }
 
-            setFlashcards(data.flashcards || []);
+            const rawOutput = await puterChat(prompt, {
+                model: MODELS.JSON,
+                max_tokens: 700,
+            });
+
+            const parsedPayload = parseJsonFromAi(rawOutput);
+            const parsedCards = normalizeFlashcards(parsedPayload).slice(0, 10);
+
+            if (parsedCards.length === 0) {
+                throw new Error('Invalid structure returned from AI.');
+            }
+
+            setFlashcards(parsedCards);
         } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred.');
+            console.error('Flashcard Error:', err);
+            setError(getUserFriendlyAiError(err, 'Flashcard generation is temporarily unavailable. Please try again.'));
         } finally {
+            if (puterPath) await deleteFromPuter(puterPath);
             setIsGenerating(false);
         }
     };
@@ -100,6 +156,43 @@ export default function Flashcards({ auth, subjects }: PageProps<{ subjects: any
                         transition={{ duration: 0.4, delay: 0.1 }}
                         className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-8 shadow-sm max-w-3xl mx-auto"
                     >
+                        {/* File Upload Section */}
+                        <div className="mb-5">
+                            <input
+                                type="file"
+                                ref={fileInputRef}
+                                className="hidden"
+                                accept=".pdf,.txt,.md,.docx"
+                                onChange={handleFileChange}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => fileInputRef.current?.click()}
+                                className="w-full flex items-center justify-center gap-3 px-5 py-4 rounded-xl border-2 border-dashed border-brand-200 dark:border-brand-500/30 bg-brand-50/50 dark:bg-brand-500/10 text-brand-600 dark:text-brand-400 hover:bg-brand-100/60 dark:hover:bg-brand-500/20 transition-all font-semibold"
+                            >
+                                {uploadedFile ? (
+                                        <><BookOpen size={18} /> {uploadedFile.name} (ready for AI analysis)</>
+                                ) : (
+                                    <><UploadCloud size={18} /> Upload PDF, TXT, or DOCX</>
+                                )}
+                            </button>
+                            {uploadedFile && (
+                                <button
+                                    type="button"
+                                    onClick={() => { setUploadedFile(null); setSourceText(''); }}
+                                    className="mt-2 text-xs text-slate-400 hover:text-red-500 underline flex items-center gap-1"
+                                >
+                                    <X size={12} /> Clear file and type manually instead
+                                </button>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-3 my-4 text-xs text-slate-400">
+                            <div className="flex-1 h-px bg-slate-200 dark:bg-surface-600" />
+                            <span className="font-medium uppercase tracking-wider">or paste text below</span>
+                            <div className="flex-1 h-px bg-slate-200 dark:bg-surface-600" />
+                        </div>
+
                         <div className="mb-6">
                             <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">
                                 Paste your notes, syllabus, or study material
@@ -107,15 +200,15 @@ export default function Flashcards({ auth, subjects }: PageProps<{ subjects: any
                             <textarea
                                 value={sourceText}
                                 onChange={(e) => { setSourceText(e.target.value); setError(null); }}
-                                className={`w-full h-64 p-4 rounded-xl border bg-surface-50 dark:bg-surface-900 text-slate-900 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 transition-shadow ${error ? 'border-red-300 focus:border-red-500' : 'border-surface-200 dark:border-surface-600 focus:border-brand-500'}`}
-                                placeholder="E.g., Photosynthesis is the process used by plants, algae and certain bacteria to harness energy from sunlight and turn it into chemical energy..."
+                                className={`w-full h-48 p-4 rounded-xl border bg-surface-50 dark:bg-surface-900 text-slate-900 dark:text-white resize-none focus:ring-2 focus:ring-brand-500 transition-shadow ${error ? 'border-red-300 focus:border-red-500' : 'border-surface-200 dark:border-surface-600 focus:border-brand-500'}`}
+                                placeholder="E.g., Photosynthesis is the process used by plants, algae and certain bacteria to harness energy from sunlight..."
                                 disabled={isGenerating}
                             ></textarea>
                             <div className="flex justify-end items-center mt-2 text-xs text-slate-500">
                                 {error ? (
                                     <span className="text-red-500 font-medium">{error}</span>
                                 ) : (
-                                    <span>Min 50 characters required</span>
+                                    <span>{sourceText.length} characters – min 50 required</span>
                                 )}
                             </div>
                         </div>
@@ -123,7 +216,7 @@ export default function Flashcards({ auth, subjects }: PageProps<{ subjects: any
                         <div className="flex justify-end border-t border-surface-200 dark:border-surface-700 pt-6 mt-6">
                             <button
                                 onClick={handleGenerate}
-                                disabled={isGenerating || sourceText.trim().length < 50}
+                                disabled={isGenerating || (!uploadedFile && sourceText.trim().length < 50)}
                                 className="px-8 py-3 rounded-xl bg-gradient-to-r from-brand-500 to-purple-500 hover:from-brand-600 hover:to-purple-600 text-white font-bold transition-all shadow-md hover:shadow-lg flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isGenerating ? (

@@ -1,13 +1,13 @@
 import { useState, PropsWithChildren, ReactNode } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { User } from '@/types';
-import { LayoutDashboard, CheckSquare, FileText, Smartphone, Search, Menu, X, ChevronDown, FolderClosed, Layers, MessageSquareText } from 'lucide-react';
-import Dropdown from '@/Components/Dropdown';
-import ThemeToggle from '@/Components/ThemeToggle';
+import { LayoutDashboard, CheckSquare, FileText, Smartphone, Search, Menu, X, ChevronDown, FolderClosed, Layers, MessageSquareText, LogOut } from 'lucide-react';
+import Dropdown from '@/Components/UI/Dropdown';
+import ThemeToggle from '@/Components/Layout/ThemeToggle';
 import { Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import GlobalSearch from '@/Components/GlobalSearch';
-import FoldersSidebar from '@/Components/FoldersSidebar';
+import GlobalSearch from '@/Components/Layout/GlobalSearch';
+import FoldersSidebar from '@/Components/Layout/FoldersSidebar';
 
 export default function Authenticated({ user, header, children }: PropsWithChildren<{ user: User, header?: ReactNode }>) {
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
@@ -203,13 +203,17 @@ export default function Authenticated({ user, header, children }: PropsWithChild
                         <Menu size={24} />
                     </button>
                     <span className="font-bold text-lg text-slate-900 dark:text-white tracking-tight">Studley</span>
-                    <ThemeToggle />
+                    <div className="flex items-center gap-4">
+                        <ThemeToggle />
+                        <Link href={route('logout')} method="post" as="button" className="text-slate-500 dark:text-slate-400 hover:text-red-500">
+                            <LogOut size={20} />
+                        </Link>
+                    </div>
                 </header>
 
                 {/* Top Bar for Desktop (Helpers & Global Search) */}
                 <header className="hidden lg:flex h-16 items-center justify-end px-8 gap-6 sticky top-0 z-30 bg-transparent">
                     <GlobalSearch />
-                    <ThemeToggle />
                     <button
                         onClick={() => setIsFoldersOpen(true)}
                         className={`flex items-center gap-2 text-sm font-medium transition-colors outline-none cursor-pointer text-slate-500 dark:text-slate-400 hover:text-brand-600 dark:hover:text-brand-400`}
@@ -217,6 +221,17 @@ export default function Authenticated({ user, header, children }: PropsWithChild
                         <FolderClosed size={18} />
                         Folders
                     </button>
+                    <ThemeToggle />
+                    <div className="w-px h-6 bg-slate-200 dark:bg-white/10"></div>
+                    <Link
+                        href={route('logout')}
+                        method="post"
+                        as="button"
+                        className="flex items-center gap-2 text-sm font-medium transition-colors outline-none cursor-pointer text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400"
+                    >
+                        <LogOut size={18} />
+                        Log Out
+                    </Link>
                 </header>
 
                 {/* Main Slot with Framer Motion Page Transitions */}

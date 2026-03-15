@@ -1,13 +1,17 @@
 import { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { motion } from 'framer-motion';
-import FileUpload from '@/Components/FileUpload';
+import FileUpload from '@/Components/Shared/FileUpload';
 import { UploadedFileResponse } from '@/Services/FileUploadService';
 import { PageProps } from '@/types';
 
+interface UploadedFileWithMaterial extends UploadedFileResponse {
+    material_id?: string;
+}
+
 export default function FileUploadPage({ auth }: PageProps) {
-    const [uploadedFiles, setUploadedFiles] = useState<UploadedFileResponse[]>([]);
+    const [uploadedFiles, setUploadedFiles] = useState<UploadedFileWithMaterial[]>([]);
     const [uploadMessage, setUploadMessage] = useState<string>('');
     const [messageType, setMessageType] = useState<'success' | 'error' | ''>('');
 
@@ -149,9 +153,9 @@ export default function FileUploadPage({ auth }: PageProps) {
                                         </div>
 
                                         <a
-                                            href={file.url}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                            href={file.material_id ? route('materials.show', file.material_id) : file.url}
+                                            target={file.material_id ? undefined : '_blank'}
+                                            rel={file.material_id ? undefined : 'noopener noreferrer'}
                                             className="px-4 py-2 bg-slate-100 dark:bg-surface-700 text-slate-700 dark:text-white text-sm font-bold rounded-lg hover:bg-brand-500 hover:text-white dark:hover:bg-brand-500 transition-colors shadow-sm"
                                         >
                                             View

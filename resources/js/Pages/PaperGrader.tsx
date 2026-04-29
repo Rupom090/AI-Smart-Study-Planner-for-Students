@@ -4,8 +4,9 @@ import { PageProps } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, ArrowRight, CheckCircle, BarChart3, Clock, Loader2, RefreshCw, UploadCloud, X } from 'lucide-react';
 import { useState, useRef } from 'react';
+import { puterChat, parseJsonFromAi, uploadFileToPuter, deleteFromPuter, MODELS, getUserFriendlyAiError } from '@/Utils/puterAI';
 
-import Dropdown from '@/Components/Dropdown';
+import Dropdown from '@/Components/UI/Dropdown';
 
 // Define the expected shape of the AI response
 interface GradingResult {
@@ -59,33 +60,66 @@ export default function PaperGrader({ auth }: PageProps) {
         setError(null);
         setResult(null);
 
+        let puterPath: string | null = null;
+
         try {
-            const formData = new FormData();
-            formData.append('rubric', rubric);
+            const jsonSchema = `{
+    "score": 85,
+    "letter_grade": "B",
+    "feedback_summary": "2-3 sentence overall summary.",
+    "grammar_syntax": ["Grammar note 1", "Grammar note 2"],
+    "argument_structure": ["Argument note"],
+    "actionable_tips": ["Tip the student can apply right now"]
+}`;
+
+            const gradePrompt = `You are an expert academic grader. Grade the following text using the '${rubric}' rubric.\n\nRespond STRICTLY with a valid JSON object (no markdown, no extra text):\n${jsonSchema}\n\nTEXT TO GRADE:\n${content.substring(0, 6000)}`;
+
+            let prompt: string | object[] = gradePrompt;
             if (document) {
-                formData.append('document', document);
-            } else {
-                formData.append('content', content);
+                puterPath = await uploadFileToPuter(document);
+                prompt = [{
+                    role: 'user',
+                    content: [
+                        { type: 'file', puter_path: puterPath },
+                        { type: 'text', text: `You are an expert academic grader. Grade this document using the '${rubric}' rubric.
+
+Respond STRICTLY with a valid JSON object (no markdown, no extra text):
+${jsonSchema}` }
+                    ]
+                }];
             }
 
-            const response = await fetch('/api/v1/paper-grader', {
-                method: 'POST',
-                headers: {
-                    'Accept': 'application/json',
-                },
-                body: formData
+            const rawOutput = await puterChat(prompt, {
+                model: MODELS.DOCUMENT,
+                max_tokens: 900,
             });
 
-            const data = await response.json();
+            const parsedPayload = parseJsonFromAi(rawOutput);
+            const parsedResult = {
+                score: Number(parsedPayload?.score ?? 0),
+                letter_grade: (parsedPayload?.letter_grade ?? '').toString().trim(),
+                feedback_summary: (parsedPayload?.feedback_summary ?? '').toString().trim(),
+                grammar_syntax: Array.isArray(parsedPayload?.grammar_syntax)
+                    ? parsedPayload.grammar_syntax.map((item: any) => String(item)).filter((item: string) => item.trim().length > 0)
+                    : [],
+                argument_structure: Array.isArray(parsedPayload?.argument_structure)
+                    ? parsedPayload.argument_structure.map((item: any) => String(item)).filter((item: string) => item.trim().length > 0)
+                    : [],
+                actionable_tips: Array.isArray(parsedPayload?.actionable_tips)
+                    ? parsedPayload.actionable_tips.map((item: any) => String(item)).filter((item: string) => item.trim().length > 0)
+                    : [],
+            } as GradingResult;
 
-            if (!response.ok || data.feedback?.error) {
-                throw new Error(data.feedback?.message || data.message || "Failed to grade paper.");
+            if (!Number.isFinite(parsedResult.score) || !parsedResult.feedback_summary) {
+                throw new Error('Invalid structure returned from AI.');
             }
 
-            setResult(data.feedback);
+            setResult(parsedResult);
         } catch (err: any) {
-            setError(err.message || 'An unexpected error occurred.');
+            console.error('Grader Error:', err);
+            setError(getUserFriendlyAiError(err, 'Paper grading is temporarily unavailable. Please try again.'));
         } finally {
+            if (puterPath) await deleteFromPuter(puterPath);
             setIsGrading(false);
         }
     };
@@ -244,11 +278,31 @@ export default function PaperGrader({ auth }: PageProps) {
                                                 <p className="text-slate-600 dark:text-slate-400 text-sm max-w-lg">{result.feedback_summary}</p>
                                             </div>
                                             <div className="flex items-center gap-4 bg-surface-50 dark:bg-surface-900 p-4 rounded-2xl border border-surface-200 dark:border-surface-700">
-                                                <div className="text-center">
-                                                    <div className="text-3xl font-black text-brand-600 flex items-baseline justify-center">
-                                                        {result.score}<span className="text-sm text-slate-400 font-medium ml-1">/100</span>
+                                                {/* Animated SVG Score Ring */}
+                                                <div className="relative w-20 h-20 shrink-0">
+                                                    <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                                                        <circle cx="40" cy="40" r="34" fill="none" stroke="currentColor"
+                                                            className="text-surface-200 dark:text-surface-700" strokeWidth="8" />
+                                                        <circle
+                                                            cx="40" cy="40" r="34" fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="8"
+                                                            strokeLinecap="round"
+                                                            strokeDasharray={`${2 * Math.PI * 34}`}
+                                                            strokeDashoffset={`${2 * Math.PI * 34 * (1 - result.score / 100)}`}
+                                                            className={`transition-all duration-1000 ease-out ${
+                                                                result.score >= 80 ? 'text-emerald-500' :
+                                                                result.score >= 60 ? 'text-amber-500' : 'text-red-500'
+                                                            }`}
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                        <span className={`text-lg font-black leading-none ${
+                                                            result.score >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+                                                            result.score >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
+                                                        }`}>{result.score}</span>
+                                                        <span className="text-[10px] text-slate-400 font-medium">/100</span>
                                                     </div>
-                                                    <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Score</div>
                                                 </div>
                                                 <div className="w-px h-12 bg-surface-200 dark:bg-surface-700"></div>
                                                 <div className="text-center">

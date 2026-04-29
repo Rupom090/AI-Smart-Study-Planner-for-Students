@@ -16,6 +16,9 @@ class Subject extends Model
     protected $fillable = [
         'user_id',
         'name',
+        'description',
+        'color',
+        'icon',
         'exam_date',
         'priority_level',
     ];
@@ -25,9 +28,9 @@ class Subject extends Model
     public $sortable = ['name', 'exam_date', 'priority_level', 'created_at'];
 
     protected $casts = [
-        'exam_date' => 'date',
+        'exam_date'      => 'date',
+        'priority_level' => 'integer',
     ];
-
 
 
     public function user()

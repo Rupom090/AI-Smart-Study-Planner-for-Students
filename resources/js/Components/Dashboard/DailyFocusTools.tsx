@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import TextInput from '@/Components/TextInput';
+import TextInput from '@/Components/UI/TextInput';
 import { Link } from '@inertiajs/react';
 
 export default function DailyFocusTools() {

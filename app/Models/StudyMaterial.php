@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\DocumentType;
+use App\Enums\StudyMaterialStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -26,6 +28,8 @@ class StudyMaterial extends Model
 
     protected $casts = [
         'ai_analysis' => 'array',
+        'document_type' => DocumentType::class,
+        'status' => StudyMaterialStatus::class,
     ];
 
     protected static function booted(): void

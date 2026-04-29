@@ -10,4 +10,9 @@ export default defineConfig({
         }),
         react(),
     ],
+    build: {
+        // Silence the bundle warning — Welcome.js is large due to embedded Puter.js blob
+        // True code splitting requires Puter to be loaded via CDN <script> tag instead
+        chunkSizeWarningLimit: 2500,
+    },
 });

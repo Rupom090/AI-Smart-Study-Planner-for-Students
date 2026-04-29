@@ -5,6 +5,10 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageSquareText, Send, Loader2, FileText, ChevronRight, Bot, User as UserIcon } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { puterChatStream, MODELS, getUserFriendlyAiError } from '@/Utils/puterAI';
+
+/* Blinking cursor CSS injected once */
+const CURSOR_STYLE = `@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}.ai-cursor::after{content:'│';animation:blink 1s step-start infinite;color:#a78bfa;font-weight:300;}`;
 
 interface ChatMessage {
     role: 'user' | 'assistant' | 'system';
@@ -46,28 +50,37 @@ export default function DocumentChat({ auth, subjects, activeMaterial }: PagePro
         setIsThinking(true);
 
         try {
-            const response = await fetch('/api/v1/document-chat', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
+            const docContext = (activeDoc?.content_extracted || activeDoc?.content || 'No text content available.').toString();
+            const safeDocContext = docContext.substring(0, 8000);
+            const recentHistory = messages.slice(-8);
+
+            // Build Context-Aware Multi-Turn Grok Array
+            const conversationHistory = [
+                {
+                    role: 'system',
+                    content: `You are a helpful AI Document Assistant. You must answer the user's questions based primarily on the provided document context. If the answer cannot be found in the context, you may use your general knowledge but clarify that it wasn't mentioned in the text.\n\n---START DOCUMENT---\nTITLE: ${activeDoc?.title || 'Unknown'}\n\n${safeDocContext}\n---END DOCUMENT---`
                 },
-                body: JSON.stringify({
-                    material_id: selectedMaterialId,
-                    message: userMsg,
-                    history: messages // pass previous history
-                })
-            });
+                ...recentHistory.map(m => ({ role: m.role, content: m.content })),
+                { role: 'user', content: userMsg }
+            ];
 
-            const data = await response.json();
+            // Add placeholder streaming message
+            setMessages([...newHistory, { role: 'assistant', content: '' }]);
 
-            if (!response.ok) {
-                throw new Error(data.error || 'Failed to get a response.');
-            }
-
-            setMessages([...newHistory, { role: 'assistant', content: data.reply }]);
+            await puterChatStream(
+                conversationHistory,
+                (_, accumulated) => {
+                    setMessages(prev => [
+                        ...prev.slice(0, -1),
+                        { role: 'assistant', content: accumulated }
+                    ]);
+                },
+                { model: MODELS.DOCUMENT, max_tokens: 900 }
+            );
         } catch (err: any) {
-            setMessages([...newHistory, { role: 'assistant', content: `**Error:** ${err.message}` }]);
+            console.error('Chat Error:', err);
+            const readableError = getUserFriendlyAiError(err, 'I could not answer right now. Please try again in a moment.');
+            setMessages([...newHistory, { role: 'assistant', content: readableError }]);
         } finally {
             setIsThinking(false);
         }
@@ -85,6 +98,7 @@ export default function DocumentChat({ auth, subjects, activeMaterial }: PagePro
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Chat with Document - Studley AI" />
+            <style>{CURSOR_STYLE}</style>
 
             <div className="flex flex-col h-[calc(100vh-64px)] lg:h-screen">
                 {/* Header Area */}
@@ -126,23 +140,52 @@ export default function DocumentChat({ auth, subjects, activeMaterial }: PagePro
                 {/* Main Chat Area */}
                 <div className="flex-1 overflow-hidden relative bg-slate-50/30 dark:bg-black/10">
                     {!selectedMaterialId ? (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                            <div className="w-20 h-20 bg-surface-100 dark:bg-surface-800 rounded-full flex items-center justify-center mb-6 text-slate-400">
-                                <FileText size={40} />
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                            className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center"
+                        >
+                            {/* Animated icon container */}
+                            <div className="relative mb-8">
+                                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center shadow-xl shadow-brand-500/25">
+                                    <MessageSquareText size={44} className="text-white" />
+                                </div>
+                                <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-green-400 border-2 border-white dark:border-studley-dark animate-pulse" />
                             </div>
-                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Select a Document</h2>
-                            <p className="text-slate-500 max-w-md">
-                                Choose a document from the dropdown above to start asking questions, summarizing content, or testing your knowledge.
+
+                            <h2 className="text-2xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">
+                                Chat with your Documents
+                            </h2>
+                            <p className="text-slate-500 dark:text-slate-400 max-w-sm mb-6 leading-relaxed">
+                                Select a study material from the dropdown above to start an AI-powered conversation about its contents.
                             </p>
-                            {allMaterials.length === 0 && (
+
+                            {/* Feature bullets */}
+                            <div className="flex flex-col gap-2 text-sm text-left text-slate-600 dark:text-slate-400 mb-8 w-full max-w-xs">
+                                {[
+                                    { icon: '📖', text: 'Ask questions about your notes' },
+                                    { icon: '🧠', text: 'Test your understanding' },
+                                    { icon: '✨', text: 'Get instant AI explanations' },
+                                ].map(({ icon, text }) => (
+                                    <div key={text} className="flex items-center gap-3 px-4 py-2 rounded-lg bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 shadow-sm">
+                                        <span className="text-base">{icon}</span>
+                                        <span className="font-medium">{text}</span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {allMaterials.length === 0 ? (
                                 <Link
                                     href={route('dashboard')}
-                                    className="mt-6 flex items-center gap-2 text-brand-600 font-medium hover:underline"
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-600 text-white font-bold hover:bg-brand-700 transition-colors shadow-md hover:shadow-lg"
                                 >
-                                    Go upload a document first <ChevronRight size={16} />
+                                    Upload a document first <ChevronRight size={16} />
                                 </Link>
+                            ) : (
+                                <p className="text-xs text-slate-400 italic">↑ Choose a document from the dropdown above</p>
                             )}
-                        </div>
+                        </motion.div>
                     ) : (
                         <div className="h-full flex flex-col max-w-4xl mx-auto w-full">
                             {/* Messages Container */}
@@ -156,16 +199,18 @@ export default function DocumentChat({ auth, subjects, activeMaterial }: PagePro
                                         className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                                     >
                                         <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user'
-                                                ? 'bg-brand-600 text-white'
-                                                : 'bg-purple-600 text-white'
+                                            ? 'bg-brand-600 text-white'
+                                            : 'bg-purple-600 text-white'
                                             }`}>
                                             {msg.role === 'user' ? <UserIcon size={16} /> : <Bot size={16} />}
                                         </div>
                                         <div className={`max-w-[85%] rounded-2xl px-5 py-3.5 shadow-sm ${msg.role === 'user'
-                                                ? 'bg-brand-600 text-white rounded-tr-sm'
-                                                : 'bg-white dark:bg-surface-800 text-slate-900 dark:text-white border border-surface-200 dark:border-surface-700 rounded-tl-sm'
+                                            ? 'bg-brand-600 text-white rounded-tr-sm'
+                                            : 'bg-white dark:bg-surface-800 text-slate-900 dark:text-white border border-surface-200 dark:border-surface-700 rounded-tl-sm'
                                             }`}>
-                                            <div className="prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50">
+                                            <div className={`prose prose-sm dark:prose-invert max-w-none prose-p:leading-relaxed prose-pre:bg-slate-900 prose-pre:text-slate-50 ${
+                                                msg.role === 'assistant' && isThinking && idx === messages.length - 1 ? 'ai-cursor' : ''
+                                            }`}>
                                                 {msg.role === 'user' ? (
                                                     <p className="whitespace-pre-wrap m-0">{msg.content}</p>
                                                 ) : (
@@ -176,7 +221,8 @@ export default function DocumentChat({ auth, subjects, activeMaterial }: PagePro
                                     </motion.div>
                                 ))}
 
-                                {isThinking && (
+                                {/* Only show spinner if no streaming content yet */}
+                                {isThinking && messages[messages.length - 1]?.content === '' && (
                                     <motion.div
                                         initial={{ opacity: 0 }}
                                         animate={{ opacity: 1 }}

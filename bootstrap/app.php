@@ -19,8 +19,18 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SecurityHeaders::class,
         ]);
 
+        // Sanctum: initialises the web session for API requests coming from the same
+        // origin (Inertia SPA). This is required so JwtMiddleware's auth('web')->check()
+        // returns true for logged-in users, avoiding 'Authorization Token not found'.
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+        ]);
+
+        // Exclude all /api/* routes from CSRF verification.
+        // EnsureFrontendRequestsAreStateful would normally inject VerifyCsrfToken,
+        // but this exception prevents the 419 errors on API POSTs.
+        $middleware->validateCsrfTokens(except: [
+            'api/*',
         ]);
 
         $middleware->alias([

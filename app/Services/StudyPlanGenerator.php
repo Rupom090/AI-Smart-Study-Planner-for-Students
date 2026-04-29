@@ -6,11 +6,11 @@ use App\Models\AiFeedback;
 use App\Models\DailyPlan;
 use App\Models\DailyTask;
 use App\Models\Subject;
+use App\Enums\DailyTaskStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use OpenAI; // requires composer package openai-php/client
 
 class StudyPlanGenerator
 {
@@ -30,20 +30,22 @@ class StudyPlanGenerator
 
         if ($useAi) {
             try {
-                $client = OpenAI::client(config('services.openai.key'));
-                $response = $client->chat()->create([
-                    'model' => config('services.openai.model', 'gpt-4o'),
-                    'messages' => [
-                        ['role' => 'system', 'content' => 'You are a study planner AI. Create realistic daily plans. Avoid overload. Output JSON with fields tasks (array) and summary (string).'],
-                        ['role' => 'user', 'content' => json_encode($payload)],
-                    ],
-                    'response_format' => ['type' => 'json_object'],
-                ]);
+                // Use Laravel HTTP facade — no openai-php/client package required
+                $httpResponse = \Illuminate\Support\Facades\Http::withToken(config('services.openai.key'))
+                    ->timeout(30)
+                    ->post('https://api.openai.com/v1/chat/completions', [
+                        'model'           => config('services.openai.model', 'gpt-4o'),
+                        'messages'        => [
+                            ['role' => 'system', 'content' => 'You are a study planner AI. Create realistic daily plans. Avoid overload. Output JSON with fields tasks (array) and summary (string).'],
+                            ['role' => 'user',   'content' => json_encode($payload)],
+                        ],
+                        'response_format' => ['type' => 'json_object'],
+                    ]);
 
-                $aiModel = $response->model ?? null;
-                $content = $response->choices[0]->message->content ?? '{}';
-                $parsed = json_decode($content, true);
-                $tasks = Arr::get($parsed, 'tasks', []);
+                $aiModel = $httpResponse->json('model');
+                $content  = $httpResponse->json('choices.0.message.content') ?? '{}';
+                $parsed   = json_decode($content, true);
+                $tasks     = Arr::get($parsed, 'tasks', []);
                 $aiSummary = Arr::get($parsed, 'summary', '');
             } catch (\Throwable $e) {
                 Log::warning('AI generation failed, falling back to heuristic plan', ['error' => $e->getMessage()]);
@@ -64,12 +66,12 @@ class StudyPlanGenerator
             $plan->tasks()->delete();
             foreach ($tasks as $index => $task) {
                 DailyTask::create([
-                    'daily_plan_id' => $plan->id,
-                    'topic_id' => Arr::get($task, 'topic_id'),
-                    'task_title' => Arr::get($task, 'title', 'Study'),
+                    'daily_plan_id'   => $plan->id,
+                    'topic_id'        => Arr::get($task, 'topic_id'),
+                    'task_title'      => Arr::get($task, 'title', 'Study'),
                     'planned_minutes' => Arr::get($task, 'minutes', null),
-                    'task_order' => $index + 1,
-                    'status' => 'pending',
+                    'task_order'      => $index + 1,
+                    'status'          => DailyTaskStatus::NOT_STARTED->value,
                 ]);
             }
 

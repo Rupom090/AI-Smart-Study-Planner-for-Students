@@ -2,6 +2,28 @@
 
 Write-Host "Starting Development Environment for AI Smart Study Planner..." -ForegroundColor Cyan
 
+# Prevent inherited terminal env vars (often left from test/debug sessions)
+# from overriding Laravel .env database/session settings in child processes.
+$overrideVars = @(
+    'DB_CONNECTION',
+    'DB_DATABASE',
+    'DB_HOST',
+    'DB_PORT',
+    'DB_USERNAME',
+    'DB_PASSWORD',
+    'SESSION_DRIVER',
+    'CACHE_STORE',
+    'APP_ENV'
+)
+
+foreach ($name in $overrideVars) {
+    if (Test-Path "Env:$name") {
+        Remove-Item "Env:$name" -ErrorAction SilentlyContinue
+    }
+}
+
+Write-Host "Cleared inherited env overrides so Laravel uses .env settings." -ForegroundColor DarkGray
+
 # 1. Start MySQL (XAMPP) if not running
 $mysqlRunning = Get-Process mysqld -ErrorAction SilentlyContinue
 if (-not $mysqlRunning) {

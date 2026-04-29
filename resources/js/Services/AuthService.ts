@@ -41,7 +41,7 @@ class AuthService {
         const storage = remember ? localStorage : sessionStorage;
         storage.setItem(this.TOKEN_KEY, token);
         storage.setItem(this.USER_KEY, JSON.stringify(user));
-        
+
         // Set axios default header
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     }
@@ -80,7 +80,8 @@ class AuthService {
     }
 
     /**
-     * Initialize axios with stored token
+     * Initialize axios with stored token.
+     * Always sets the Bearer header if a token exists in storage.
      */
     static initializeAuth(): void {
         const token = this.getToken();
@@ -137,7 +138,7 @@ class AuthService {
     static async refreshToken(): Promise<boolean> {
         try {
             const response = await axios.post<AuthResponse>(`${this.API_URL}/refresh`);
-            
+
             if (response.data.success && response.data.data) {
                 const user = this.getUser();
                 const remember = !!localStorage.getItem(this.TOKEN_KEY);
@@ -160,11 +161,22 @@ class AuthService {
             async (error) => {
                 const originalRequest = error.config;
 
+                // If the refresh endpoint itself returns 401, clear auth and bail out
+                if (originalRequest.url?.includes('/refresh')) {
+                    this.clearAuth();
+                    return Promise.reject(error);
+                }
+
                 if (error.response?.status === 401 && !originalRequest._retry) {
                     originalRequest._retry = true;
 
                     const refreshed = await this.refreshToken();
                     if (refreshed) {
+                        // Apply the new token to the retried request header
+                        const newToken = this.getToken();
+                        if (newToken) {
+                            originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
+                        }
                         return axios(originalRequest);
                     }
                 }

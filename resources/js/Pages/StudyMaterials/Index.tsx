@@ -1,11 +1,11 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
-import InputLabel from '@/Components/InputLabel';
-import TextInput from '@/Components/TextInput';
-import InputError from '@/Components/InputError';
+import PrimaryButton from '@/Components/UI/PrimaryButton';
+import SecondaryButton from '@/Components/UI/SecondaryButton';
+import InputLabel from '@/Components/UI/InputLabel';
+import TextInput from '@/Components/UI/TextInput';
+import InputError from '@/Components/UI/InputError';
 import { useState, FormEventHandler } from 'react';
 
 interface Material {

@@ -4,11 +4,11 @@ import { useState, FormEventHandler } from 'react';
 import { PageProps } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BookOpen, Calendar, CheckCircle2, ChevronLeft, Plus, Trash2, Clock, BarChart } from 'lucide-react';
-import InputLabel from '@/Components/InputLabel';
-import TextInput from '@/Components/TextInput';
-import InputError from '@/Components/InputError';
-import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
+import InputLabel from '@/Components/UI/InputLabel';
+import TextInput from '@/Components/UI/TextInput';
+import InputError from '@/Components/UI/InputError';
+import PrimaryButton from '@/Components/UI/PrimaryButton';
+import SecondaryButton from '@/Components/UI/SecondaryButton';
 
 interface Topic {
     id: string;

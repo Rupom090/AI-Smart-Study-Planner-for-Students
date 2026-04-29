@@ -19,11 +19,19 @@ class JwtMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Check if user is authenticated via standard web session (for Inertia frontend calls)
+        if (auth('web')->check()) {
+            // Use the web guard for this request
+            auth()->shouldUse('web');
+            return $next($request);
+        }
+
         try {
             $user = JWTAuth::parseToken()->authenticate();
             if (!$user) {
                 return response()->json(['success' => false, 'message' => 'User not found'], 404);
             }
+
         } catch (Exception $e) {
             if ($e instanceof TokenInvalidException) {
                 return response()->json(['success' => false, 'message' => 'Token is Invalid'], 401);

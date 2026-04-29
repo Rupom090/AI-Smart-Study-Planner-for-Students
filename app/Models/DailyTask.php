@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DailyTaskStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -25,6 +26,7 @@ class DailyTask extends Model
     protected $casts = [
         'planned_minutes' => 'integer',
         'task_order' => 'integer',
+        'status' => DailyTaskStatus::class,
     ];
 
     protected static function booted(): void

@@ -149,7 +149,37 @@ ${safeText}`;
                     </p>
                 </motion.div>
 
-                {flashcards.length === 0 ? (
+                {isGenerating ? (
+                    /* Skeleton loading state — AI is generating */
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="max-w-3xl mx-auto"
+                    >
+                        <div className="flex flex-col items-center mb-8">
+                            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center shadow-lg mb-4 animate-pulse">
+                                <Sparkles size={28} className="text-white" />
+                            </div>
+                            <p className="text-lg font-bold text-slate-700 dark:text-slate-300">Generating your flashcard deck...</p>
+                            <p className="text-sm text-slate-400 mt-1">AI is reading your material and creating cards</p>
+                        </div>
+                        <div className="space-y-4">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className="h-28 rounded-2xl bg-white dark:bg-surface-800 border border-surface-200 dark:border-surface-700 shadow-sm overflow-hidden">
+                                    <div className="h-full relative overflow-hidden">
+                                        <div className="absolute inset-0 -translate-x-full animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-slate-100/60 dark:via-white/5 to-transparent" style={{ animationDelay: `${i * 0.2}s` }} />
+                                        <div className="p-5 flex flex-col gap-3">
+                                            <div className="h-3 bg-slate-200 dark:bg-surface-700 rounded-full w-1/3" />
+                                            <div className="h-4 bg-slate-200 dark:bg-surface-700 rounded-full w-3/4" />
+                                            <div className="h-3 bg-slate-200 dark:bg-surface-700 rounded-full w-1/2" />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        <style dangerouslySetInnerHTML={{ __html: `@keyframes shimmer { to { transform: translateX(200%); } }` }} />
+                    </motion.div>
+                ) : flashcards.length === 0 ? (
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}

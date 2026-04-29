@@ -2,11 +2,36 @@ import { Head } from '@inertiajs/react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { PageProps } from '@/types';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckSquare, UploadCloud, Search, Sparkles, Loader2, FileImage, FileText, X, Globe } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { CheckSquare, UploadCloud, Search, Sparkles, Loader2, FileImage, FileText, X, Globe, Copy, Check, RotateCcw, Clock } from 'lucide-react';
+import { useState, useRef, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { puterChatStream, uploadFileToPuter, deleteFromPuter, MODELS, getUserFriendlyAiError } from '@/Utils/puterAI';
+
+const HISTORY_KEY = 'studley_solve_history';
+
+interface SolveHistory {
+    question: string;
+    timestamp: number;
+}
+
+function loadHistory(): SolveHistory[] {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); } catch { return []; }
+}
+
+function saveToHistory(question: string) {
+    const prev = loadHistory();
+    const updated = [{ question: question.substring(0, 80), timestamp: Date.now() }, ...prev].slice(0, 8);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+}
+
+function timeAgo(ts: number): string {
+    const diff = Math.floor((Date.now() - ts) / 1000);
+    if (diff < 60) return 'just now';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+    return `${Math.floor(diff / 86400)}d ago`;
+}
 
 /** Styled component map — gives every markdown element proper spacing & typography */
 const mdComponents: React.ComponentProps<typeof ReactMarkdown>['components'] = {
@@ -41,8 +66,20 @@ export default function Solve({ auth }: PageProps) {
     const [solution, setSolution] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [useWebSearch, setUseWebSearch] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const [history, setHistory] = useState<SolveHistory[]>(loadHistory);
+    const [lastPrompt, setLastPrompt] = useState<{ type: 'text' | 'image', payload: any } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const docInputRef = useRef<HTMLInputElement>(null);
+
+    const refreshHistory = () => setHistory(loadHistory());
+
+    const handleCopy = useCallback(async () => {
+        if (!solution) return;
+        await navigator.clipboard.writeText(solution);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    }, [solution]);
 
     const handleTextSubmit = async () => {
         if (!question.trim() && !uploadedDoc) return;
@@ -52,6 +89,7 @@ export default function Solve({ auth }: PageProps) {
         setSolution('');
         setImage(null);
         setImagePreview(null);
+        setLastPrompt({ type: 'text', payload: { question, uploadedDoc, useWebSearch } });
 
         let puterPath: string | null = null;
         try {
@@ -95,8 +133,6 @@ Problem:
 ${question}`;
             }
 
-            // File content type (puter_path) is only supported by document-capable models.
-            // Web search is only available on OpenAI models — skip it when a doc is attached.
             const opts = uploadedDoc
                 ? { model: MODELS.DOCUMENT, max_tokens: 1200 }
                 : useWebSearch
@@ -109,6 +145,7 @@ ${question}`;
                     (_, accumulated) => setSolution(accumulated),
                     opts
                 );
+                if (question.trim()) { saveToHistory(question); refreshHistory(); }
             } catch (streamErr: any) {
                 const canFallback = !uploadedDoc && useWebSearch;
                 if (!canFallback) {
@@ -144,7 +181,6 @@ ${question}`;
         }
     };
 
-    // Upload doc to Puter filesystem — AI reads it directly, no backend needed
     const handleDocChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -162,9 +198,9 @@ ${question}`;
         setIsSolving(true);
         setError(null);
         setSolution('');
+        setLastPrompt({ type: 'image', payload: image });
         let puterPath: string | null = null;
         try {
-            // Upload image to Puter and pass via puter_path content type
             puterPath = await uploadFileToPuter(image);
             const messages = [{
                 role: 'user',
@@ -186,6 +222,8 @@ Formatting rules:
                 (_, accumulated) => setSolution(accumulated),
                 { model: MODELS.VISION, max_tokens: 900 }
             );
+            saveToHistory(`[Image] ${image.name}`);
+            refreshHistory();
         } catch (err: any) {
             console.error('Vision Error:', err);
             setError(getUserFriendlyAiError(err, 'Image analysis is temporarily unavailable. Please try again.'));
@@ -391,22 +429,55 @@ Formatting rules:
 
                         {/* Solution Area */}
                         <AnimatePresence>
-                            {solution && (
+                            {(solution || error) && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     className="bg-brand-50 dark:bg-brand-900/20 border border-brand-200 dark:border-brand-500/30 rounded-2xl p-6 md:p-8"
                                 >
-                                    <div className="flex items-center gap-3 mb-6 border-b border-brand-200/50 dark:border-brand-500/20 pb-4">
-                                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white shadow-sm">
-                                            <Sparkles size={20} />
+                                    <div className="flex items-center justify-between gap-3 mb-6 border-b border-brand-200/50 dark:border-brand-500/20 pb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-purple-500 flex items-center justify-center text-white shadow-sm">
+                                                <Sparkles size={20} />
+                                            </div>
+                                            <h2 className="text-xl font-bold text-slate-900 dark:text-white">AI Solution</h2>
                                         </div>
-                                        <h2 className="text-xl font-bold text-slate-900 dark:text-white">AI Solution</h2>
+                                        <div className="flex items-center gap-2">
+                                            {/* Retry button */}
+                                            {lastPrompt && (
+                                                <button
+                                                    onClick={() => lastPrompt.type === 'text' ? handleTextSubmit() : handleImageSubmit()}
+                                                    disabled={isSolving}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-700 transition-colors disabled:opacity-40"
+                                                    title="Retry"
+                                                >
+                                                    <RotateCcw size={13} /> Retry
+                                                </button>
+                                            )}
+                                            {/* Copy button */}
+                                            {solution && (
+                                                <button
+                                                    onClick={handleCopy}
+                                                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                                                        copied
+                                                            ? 'bg-green-100 dark:bg-green-500/20 text-green-700 dark:text-green-400'
+                                                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-surface-700'
+                                                    }`}
+                                                >
+                                                    {copied ? <Check size={13} /> : <Copy size={13} />}
+                                                    {copied ? 'Copied!' : 'Copy'}
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
 
-                                    <div className="max-w-none">
-                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{solution}</ReactMarkdown>
-                                    </div>
+                                    {error ? (
+                                        <p className="text-red-500 text-sm font-medium">{error}</p>
+                                    ) : (
+                                        <div className="max-w-none">
+                                            <ReactMarkdown remarkPlugins={[remarkGfm]} components={mdComponents}>{solution!}</ReactMarkdown>
+                                        </div>
+                                    )}
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -417,29 +488,40 @@ Formatting rules:
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.4, delay: 0.2 }}
-                        className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-6 shadow-sm h-fit"
+                        className="bg-white dark:bg-surface-800 rounded-2xl border border-surface-200 dark:border-surface-700 p-6 shadow-sm h-fit sticky top-4"
                     >
-                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">Recent Solutions</h3>
-                        <div className="space-y-4">
-                            {[
-                                { title: "Quadratic Equation", subject: "Math", status: "Solved" },
-                                { title: "Cellular Respiration", subject: "Biology", status: "Solved" },
-                                { title: "Newton's Second Law", subject: "Physics", status: "Pending" }
-                            ].map((item, i) => (
-                                <div key={i} className="flex flex-col p-3 rounded-xl hover:bg-surface-50 dark:hover:bg-surface-700 border border-transparent hover:border-surface-200 dark:hover:border-surface-600 transition-all cursor-pointer">
-                                    <span className="font-semibold text-slate-800 dark:text-slate-200 text-sm mb-1 line-clamp-1">{item.title}</span>
-                                    <div className="flex items-center justify-between text-xs">
-                                        <span className="text-brand-600 dark:text-brand-400 font-medium">{item.subject}</span>
-                                        <span className={`px-2 py-0.5 rounded-md ${item.status === 'Solved' ? 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400' : 'bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400'}`}>
-                                            {item.status}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                        <button className="w-full mt-6 py-2 text-sm text-brand-600 dark:text-brand-400 font-medium hover:underline">
-                            View all history
-                        </button>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                            <Clock size={18} className="text-slate-400" /> Recent Solutions
+                        </h3>
+                        {history.length === 0 ? (
+                            <p className="text-sm text-slate-400 dark:text-slate-500 italic">No solutions yet. Ask your first question!</p>
+                        ) : (
+                            <div className="space-y-3">
+                                {history.map((item, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => { setQuestion(item.question.replace(/^\[Image\] /, '')); }}
+                                        className="w-full flex flex-col p-3 rounded-xl hover:bg-surface-50 dark:hover:bg-surface-700 border border-transparent hover:border-surface-200 dark:hover:border-surface-600 transition-all text-left"
+                                    >
+                                        <span className="font-medium text-slate-800 dark:text-slate-200 text-sm line-clamp-2">{item.question}</span>
+                                        <span className="text-xs text-slate-400 mt-1">{timeAgo(item.timestamp)}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                        {history.length > 0 && (
+                            <button
+                                onClick={() => {
+                                    if (window.confirm('Clear all solve history? This cannot be undone.')) {
+                                        localStorage.removeItem(HISTORY_KEY);
+                                        refreshHistory();
+                                    }
+                                }}
+                                className="w-full mt-4 py-1.5 text-xs text-slate-400 hover:text-red-500 font-medium transition-colors"
+                            >
+                                Clear history
+                            </button>
+                        )}
                     </motion.div>
                 </div>
             </div>

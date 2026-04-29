@@ -278,11 +278,31 @@ ${jsonSchema}` }
                                                 <p className="text-slate-600 dark:text-slate-400 text-sm max-w-lg">{result.feedback_summary}</p>
                                             </div>
                                             <div className="flex items-center gap-4 bg-surface-50 dark:bg-surface-900 p-4 rounded-2xl border border-surface-200 dark:border-surface-700">
-                                                <div className="text-center">
-                                                    <div className="text-3xl font-black text-brand-600 flex items-baseline justify-center">
-                                                        {result.score}<span className="text-sm text-slate-400 font-medium ml-1">/100</span>
+                                                {/* Animated SVG Score Ring */}
+                                                <div className="relative w-20 h-20 shrink-0">
+                                                    <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                                                        <circle cx="40" cy="40" r="34" fill="none" stroke="currentColor"
+                                                            className="text-surface-200 dark:text-surface-700" strokeWidth="8" />
+                                                        <circle
+                                                            cx="40" cy="40" r="34" fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="8"
+                                                            strokeLinecap="round"
+                                                            strokeDasharray={`${2 * Math.PI * 34}`}
+                                                            strokeDashoffset={`${2 * Math.PI * 34 * (1 - result.score / 100)}`}
+                                                            className={`transition-all duration-1000 ease-out ${
+                                                                result.score >= 80 ? 'text-emerald-500' :
+                                                                result.score >= 60 ? 'text-amber-500' : 'text-red-500'
+                                                            }`}
+                                                        />
+                                                    </svg>
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                                        <span className={`text-lg font-black leading-none ${
+                                                            result.score >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+                                                            result.score >= 60 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'
+                                                        }`}>{result.score}</span>
+                                                        <span className="text-[10px] text-slate-400 font-medium">/100</span>
                                                     </div>
-                                                    <div className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Score</div>
                                                 </div>
                                                 <div className="w-px h-12 bg-surface-200 dark:bg-surface-700"></div>
                                                 <div className="text-center">

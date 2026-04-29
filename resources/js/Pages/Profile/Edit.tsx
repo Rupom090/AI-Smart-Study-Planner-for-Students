@@ -5,12 +5,21 @@ import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
 import { motion } from 'framer-motion';
+import { useEffect } from 'react';
+import { useToast } from '@/Components/UI/Toast';
 
 export default function Edit({
     auth,
     mustVerifyEmail,
     status,
 }: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (status === 'profile-updated') toast('Profile updated successfully!');
+        if (status === 'password-updated') toast('Password changed successfully!');
+    }, [status]);
+
     return (
         <AuthenticatedLayout user={auth.user}>
             <Head title="Profile Settings" />
